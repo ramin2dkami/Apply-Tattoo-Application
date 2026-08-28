@@ -87,6 +87,9 @@ outline drawing gives no affordance on its own.
 - [x] Parts emitted with their rotation model
 - [x] Back view drawn — `assets/figure/back.svg`, same silhouette as front, same
       geometry, own anatomy detail (spine, shoulder blades, lats, glutes)
+- [x] Real traced artwork wired in for torso, back, both arms, both legs — shown
+      when that part is the only one selected. Head and hips still procedural
+      (their traces came back as solid fills; see `assets/README.md`).
 - [ ] The customer can change body part later without losing their uploaded tattoo
 - [ ] Works on a phone browser
 - [ ] Needs no account

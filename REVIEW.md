@@ -17,6 +17,63 @@ Entry format:
 
 ---
 
+## 2026-08-29 — Real reference artwork, single-page flow, Figma-style resize
+
+**Shipped:** Three changes in one pass.
+
+1. **The user's actual traced artwork is now in the app.** `assets/SVG body parts/`
+   held real vector traces of the reference illustration. `trace_geometry.py` reads the
+   point cloud directly for silhouette geometry (no more authored guesses), and a
+   single part selected alone now shows that real drawing rather than a crop of the
+   assembled procedural body. Torso, back, both arms, both legs confirmed working.
+2. **One page, progressive disclosure.** Upload, part picker, and placement are one
+   scrolling page instead of three step screens. The picker is visible but disabled
+   until an image is uploaded; the placement section only mounts once a part is
+   selected, and shows only the selected part(s) — never the whole body by default.
+3. **Figma-style resize.** The slider is gone. Four corner handles on the tattoo's
+   bounding box; dragging one scales uniformly from the opposite (anchored) corner,
+   aspect ratio always locked.
+
+**Learned:**
+
+- **Two of the seven supplied files were broken traces, not just "different style."**
+  `01_head.svg` and `06_hips.svg` came back as solid black fills rather than outlines
+  — measurably: fill ratio (actual ink area over the path's own bbox) is 1-9% for the
+  five good files and 64-70% for these two. That's a different trace *setting*, not a
+  drawing quality issue, and it's exactly the kind of thing that's invisible until you
+  measure it — a screenshot alone made all seven look plausibly similar at a glance.
+  `04_right_arm.svg` was simply absent from the folder. Flagged all three concretely
+  rather than guessing past them; mirrored the left arm as a temporary stand-in for
+  the missing file and kept the procedural head/hips as a fallback for the broken ones.
+- **A real single-part drawing and the procedural assembled figure don't share a
+  coordinate space, and don't need to.** Each part now carries its procedural geometry
+  (always, for the multi-select/spanning case) and, where we have one, a real overlay
+  used only when it's the sole selection. `edgesAt`/`surfaceAt`/`unionViewBox` already
+  operated on a minimal `{viewBox, surface}` shape, so a real part's local silhouette
+  could stand in for a full `Part` without forcing it into the shared 900x1980 canvas.
+- **A mirrored silhouette needs a mirrored drawing, not just mirrored math.** `arm-r`
+  reuses the left-arm file with its silhouette numbers flipped for correct sizing/warp
+  — but the *visual* SVG also has to flip (`transform: scaleX(-1)`, matched exactly to
+  how the silhouette was mirrored) or the picture shows a left arm labeled "Right arm."
+  Caught before wiring it in, not after.
+- **Figma-style resize is a known algorithm, not a new invention:** anchor = opposite
+  corner, scale factor = distance(pointer, anchor) / distance(startCorner, anchor),
+  apply uniformly to width and center. Worth naming because it's the boring, correct
+  answer — no reason to improvise something rougher.
+
+**Changed:** `geometry.ts` gained a `Surfaceable` type generalizing away from `Part`.
+`FigureSvg` takes a `mirror` prop. Three step-screen components deleted in favor of
+`UploadCard` + `PartsPicker` + `PlaceCanvas`, composed on one page. Specs 001 and 003
+updated.
+
+**Open:**
+- Head and hips need re-traced source files (outline mode, not solid fill) before
+  they get real artwork too.
+- `04_right_arm.svg` should be a real trace, not a mirrored stand-in, once available.
+- Still no share link — nothing reaches an artist yet.
+- Rotation still isn't wired into the app.
+- Never tested on a real phone.
+
 ## 2026-08-28 — Redrew the body properly, as individual parts
 
 **Shipped:** The figure rewritten around **parts drawn on their own** — head, neck &

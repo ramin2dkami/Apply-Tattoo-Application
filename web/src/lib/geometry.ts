@@ -9,6 +9,19 @@
 
 export type SilPoint = { y: number; left: number; right: number };
 
+/** A part carries its PROCEDURAL geometry always (shared coordinate space, used
+ *  when several parts are selected together) and, where we have one, a REAL
+ *  overlay traced from the actual reference artwork (used when it's the only part
+ *  selected, so the customer sees the real drawing instead of an assembled crop). */
+export type RealArt = {
+  art: string;
+  view: "front" | "back";
+  viewBox: [number, number, number, number];
+  pxPerCm: number;
+  silhouette: SilPoint[];
+  mirror: boolean;
+};
+
 export type Part = {
   id: string;
   label: string;
@@ -18,6 +31,14 @@ export type Part = {
   viewBox: [number, number, number, number];
   rotation: { model: "cylinder" | "views"; degrees?: number; views?: string[] };
   surface: { model: string; silhouette: SilPoint[] };
+  real?: RealArt;
+};
+
+/** The minimal shape edgesAt/surfaceAt/unionViewBox actually need — lets a single
+ *  real part's local geometry stand in for a full Part without fabricating one. */
+export type Surfaceable = {
+  viewBox: [number, number, number, number];
+  surface: { silhouette: SilPoint[] };
 };
 
 export type FigureData = {
@@ -52,7 +73,7 @@ export function edgesAt(sil: SilPoint[], y: number): [number, number] | null {
  * a selection spanning a joint behave as one continuous surface while two separate
  * limbs stay separate.
  */
-export function surfaceAt(parts: Part[], x: number, y: number): Surface | null {
+export function surfaceAt(parts: Surfaceable[], x: number, y: number): Surface | null {
   let best: Surface | null = null;
   let bestDist = Infinity;
   for (const p of parts) {
@@ -67,7 +88,7 @@ export function surfaceAt(parts: Part[], x: number, y: number): Surface | null {
   return best;
 }
 
-export function unionViewBox(parts: Part[], pad = 26): ViewBox {
+export function unionViewBox(parts: Surfaceable[], pad = 26): ViewBox {
   const x0 = Math.min(...parts.map((p) => p.viewBox[0]));
   const y0 = Math.min(...parts.map((p) => p.viewBox[1]));
   const x1 = Math.max(...parts.map((p) => p.viewBox[0] + p.viewBox[2]));

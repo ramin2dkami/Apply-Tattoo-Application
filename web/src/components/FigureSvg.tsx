@@ -29,10 +29,14 @@ export function useFigure(art: string) {
 }
 
 export function FigureSvg({
-  art = "front.svg", viewBox, className, style, children,
+  art = "front.svg", viewBox, mirror, className, style, children,
 }: {
   art?: string;
   viewBox: ViewBox;
+  /** Flips the drawing left-right. Used for a mirrored limb (we only have real
+   *  artwork for one side): the silhouette data is already mirrored to match, so the
+   *  visual flip has to line up with it exactly, not just look roughly right. */
+  mirror?: boolean;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
@@ -42,7 +46,7 @@ export function FigureSvg({
     <svg
       viewBox={viewBox.join(" ")}
       className={className}
-      style={style}
+      style={{ ...style, transform: mirror ? "scaleX(-1)" : undefined }}
       preserveAspectRatio="xMidYMid meet"
     >
       {inner && <g dangerouslySetInnerHTML={{ __html: inner }} />}

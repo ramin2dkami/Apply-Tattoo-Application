@@ -8,7 +8,7 @@
  * on anything spanning.
  */
 
-import { surfaceAt, type Part, type ViewBox } from "./geometry";
+import { surfaceAt, type Surfaceable, type ViewBox } from "./geometry";
 
 export type Placement = { cx: number; cy: number; widthCm: number };
 
@@ -20,7 +20,7 @@ export type WarpInput = {
   ctx: CanvasRenderingContext2D;
   src: ImageData;
   placement: Placement;
-  parts: Part[];
+  parts: Surfaceable[];
   vb: ViewBox;
   scale: number;      // figure px -> canvas px
   pxPerCm: number;

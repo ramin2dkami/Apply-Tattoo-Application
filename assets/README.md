@@ -109,3 +109,42 @@ arm floating beside the body.
 
 The linework is serviceable, not beautiful. Anatomy and proportion are correct and the
 geometry is exact, but it's a weaker drawing than a good reference. See `REVIEW.md`.
+
+
+## Real traced artwork (2026-08-29)
+
+`assets/SVG body parts/` holds the user's actual reference illustrations, traced to
+vector. `assets/tools/trace_geometry.py` extracts silhouette geometry directly from
+the point cloud (no authored curves — the outline IS the real drawing), and
+`assets/tools/merge_manifest.py` combines that with the procedural figure into
+`assets/figure/combined.json`, copied to `web/public/figure/parts.json`.
+
+A part with real art is shown as-is when it's the only one selected. Several parts
+selected together fall back to the procedural assembled figure, since spanning a
+joint needs one shared coordinate space that only the assembled body provides.
+
+**QA status of the supplied files:**
+
+| file | result |
+|---|---|
+| `02_neck_and_torso.svg` | good — outline trace |
+| `05_back_with_neck.svg` | good — outline trace |
+| `03_left_arm.svg` | good — outline trace (mirrored for `arm-r`) |
+| `07_left_leg.svg` / `08_right_leg.svg` | good — outline traces |
+| `01_head.svg` | **broken** — solid black fill, not an outline. Excluded; head still uses the procedural drawing. |
+| `06_hips.svg` | **broken** — solid black fill, not an outline. Excluded; hips still uses the procedural drawing. |
+| `04_right_arm.svg` | **missing** from the folder. `arm-r` mirrors the left-arm file as a stand-in. |
+
+Fill ratio (actual ink area ÷ the path's own bounding box) is what separates the two
+groups cleanly: 1–9% for the five outline traces, 64–70% for the two broken ones —
+diagnosed with `python3 -c` one-liners during this session, not a rendering bug on
+the app's end.
+
+Rebuild after any change to the source SVGs or the profile:
+
+```
+python3 assets/tools/trace_geometry.py
+python3 assets/tools/merge_manifest.py
+cp assets/figure/real/*.svg web/public/figure/real/
+cp assets/figure/combined.json web/public/figure/parts.json
+```
