@@ -17,6 +17,45 @@ Entry format:
 
 ---
 
+## 2026-08-28 — Redrew the body properly, as individual parts
+
+**Shipped:** The figure rewritten around **parts drawn on their own** — head, neck &
+torso, back, hips, left/right arm, left/right leg — matching the supplied mockup, plus
+the assembled picker figure, all from one anatomy table. Real anatomy this time:
+deltoid, elbow, forearm swell, a hand with fingers and thumb, knee, calf, a foot with
+toes, pecs, abs, obliques, a genuine shoulder-to-waist V-taper. The app now shows the
+isolated part when one is selected and the assembled body when several are.
+
+**Learned:**
+
+- **I had been told twice and kept shipping the same drawing.** I flagged the linework
+  as "serviceable, not beautiful" in two consecutive reviews and moved on both times
+  rather than fixing it. A known weakness that keeps getting logged instead of fixed is
+  just a decision to ship it. The reference was clear from the first time it was sent.
+- **Isolated parts were the actual ask, and I read it as a style note.** The mockup is a
+  sheet of separate limbs; the app was showing crops of an assembly, so picking "arm"
+  gave you an arm with a sliver of torso in frame. Rendering each part alone was
+  structural, not cosmetic — and cheap, because every part already lived in the same
+  coordinate space as the assembly.
+- **Left and right were inverted.** `arm-r` was drawn on the viewer's right, which is a
+  person's *left* arm. It renders identically in a picker and is completely wrong on the
+  brief — the artist tattoos the wrong arm. Anatomical side is now decided in exactly
+  one place (`MIRROR`), because it is invisible in every screenshot.
+- **Never run `next build` against a live `next dev`.** It overwrites `.next/` and the
+  dev server then serves 404s for its own chunks, which presents as an unstyled page
+  stuck on "Loading…" with no error in the console. Stop the dev server first.
+
+**Changed:** `build_figure.py` rewritten around parts + a limb-profile helper with
+rounded caps (a flat-topped shoulder reads as amputation when a part stands alone).
+`FigureSvg` takes any art file; `PlaceStep` picks isolated vs assembled.
+
+**Open:**
+- Rotation still isn't wired in — half the body remains unreachable.
+- No share link, so nothing yet reaches an artist.
+- Still never tested on a real phone.
+- The drawing is now decent but not equal to the reference: hands and feet are
+  simplified, and the torso's shoulder caps are squarer than they should be.
+
 ## 2026-08-28 — Version 1 runs end to end
 
 **Shipped:** The application, in `web/`. Next.js + TypeScript + Tailwind, phone-first,

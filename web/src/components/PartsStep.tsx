@@ -4,7 +4,7 @@ import { FigureSvg } from "./FigureSvg";
 import { silhouettePoints, type FigureData, type Part } from "@/lib/geometry";
 
 // Big areas first so the narrow limbs sit on top and stay tappable.
-const ORDER = ["torso", "hips", "head", "leg-r", "leg-l", "arm-r", "arm-l"];
+const ORDER = ["torso", "back", "hips", "head", "leg-r", "leg-l", "arm-r", "arm-l"];
 
 export function PartsStep({
   data, selected, onToggle, onBack, onNext,

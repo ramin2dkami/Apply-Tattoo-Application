@@ -83,6 +83,6 @@ input[type="range"]::-webkit-slider-thumb {
 
 .hit      { fill: transparent; stroke: transparent; cursor: pointer;
             transition: fill .16s ease, stroke .16s ease; }
-.hit-idle { fill: rgba(91,39,232,.05); stroke: rgba(91,39,232,.30);
-            stroke-width: 3; stroke-dasharray: 10 8; }
+.hit-idle { fill: rgba(91,39,232,.012); stroke: rgba(91,39,232,.20);
+            stroke-width: 2.5; stroke-dasharray: 9 9; }
 .hit-on   { fill: rgba(91,39,232,.17); stroke: var(--violet); stroke-width: 4.5; }

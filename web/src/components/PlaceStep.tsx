@@ -22,6 +22,15 @@ export function PlaceStep({
     [data, selected],
   );
   const vb = useMemo(() => unionViewBox(parts), [parts]);
+
+  /* A single part is drawn on its own — a clean whole limb rather than a crop of a
+   * body with a sliver of torso in frame. Several parts need the assembled figure so
+   * they read in relation to each other. Both are the same coordinate space, so the
+   * silhouettes and the warp are unaffected by the swap. */
+  const art = useMemo(() => {
+    if (parts.length === 1) return parts[0].art;
+    return parts.every((p) => p.view === "back") ? "back.svg" : "front.svg";
+  }, [parts]);
   const pxPerCm = data.figure.pxPerCm;
 
   const host = useRef<HTMLDivElement>(null);
@@ -153,7 +162,7 @@ export function PlaceStep({
           onPointerUp={up}
           onPointerCancel={up}
         >
-          <FigureSvg viewBox={vb} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+          <FigureSvg art={art} viewBox={vb} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
           <canvas
             ref={canvas}
             className="pointer-events-none absolute inset-0"

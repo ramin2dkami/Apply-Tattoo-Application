@@ -2,12 +2,27 @@
 
 The body figure. Moves to `public/` when the Next.js app is scaffolded.
 
-**Do not hand-edit `figure/front.svg` or `figure/regions.json`.** They are generated:
+**Do not hand-edit anything in `figure/`.** It is all generated:
 
 ```
-python3 assets/tools/build_figure.py   # -> figure/front.svg + figure/regions.json
+python3 assets/tools/build_figure.py   # -> per-part SVGs + front/back + regions.json
 python3 assets/tools/build_proof.py    # -> contour-proof.html (static SVG, no JS)
 ```
+
+## Parts are drawn on their own
+
+Each part is emitted as its own SVG — a clean whole limb, not a crop of a body — and
+the same shapes are assembled into the picker figure. Both renderings come from one
+table of anatomy, so they cannot drift, and because every part is drawn in the same
+coordinate space as the assembly, a part file is a drop-in swap: silhouettes, sizing
+and the warp are unaffected by which one is showing.
+
+`head torso back hips arm-r arm-l leg-r leg-l` + `front.svg` `back.svg`
+
+**Anatomical sides, not viewer sides.** A person's right arm is drawn on the viewer's
+left. `MIRROR` in the generator is the single place this is decided — getting it
+backwards points the artist at the wrong arm, which is the exact ambiguity the product
+exists to remove.
 
 ## One figure, named regions
 

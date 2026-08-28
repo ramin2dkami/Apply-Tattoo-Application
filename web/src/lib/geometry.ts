@@ -12,6 +12,8 @@ export type SilPoint = { y: number; left: number; right: number };
 export type Part = {
   id: string;
   label: string;
+  art: string;
+  view: "front" | "back";
   lengthCm: number;
   viewBox: [number, number, number, number];
   rotation: { model: "cylinder" | "views"; degrees?: number; views?: string[] };
