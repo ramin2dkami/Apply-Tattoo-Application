@@ -85,7 +85,8 @@ outline drawing gives no affordance on its own.
 - [ ] Selecting a chain zooms to the union and loads one placement canvas
 - [ ] Cross-chain selection degrades honestly rather than warping wrongly
 - [x] Parts emitted with their rotation model
-- [ ] Back view drawn — the one genuinely new illustration the mockup needs
+- [x] Back view drawn — `assets/figure/back.svg`, same silhouette as front, same
+      geometry, own anatomy detail (spine, shoulder blades, lats, glutes)
 - [ ] The customer can change body part later without losing their uploaded tattoo
 - [ ] Works on a phone browser
 - [ ] Needs no account
@@ -110,7 +111,10 @@ Skin tones are gone from the roadmap entirely: the figure is neutral by design.
   trust the size readout? This is an artist question, not a drawing question.
 - Multi-select needs an interaction that reads on a phone. Tap-to-toggle is the
   obvious answer; whether people discover that spanning is possible is not obvious.
-- The back view is a new profile and the only part of the mockup not derivable from
-  what exists. Everything else is already generated.
+- ~~The back view~~ Resolved: drawn. Reused the existing silhouette (body width is the
+  same front-to-back) and added a `BACK_DETAILS` table — spine, shoulder blades, lats,
+  lower-back crease, glutes, hamstrings. First pass drew details as three broad arcs
+  that visually merged into one dome across the lower back; fixed by tightening each
+  curve to hug its own anatomical region rather than sweeping across the full width.
 - Does picking a whole arm and then rotating beat picking "inner forearm" from a list?
   Probably, but it's more taps.

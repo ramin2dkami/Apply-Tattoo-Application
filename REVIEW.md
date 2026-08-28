@@ -17,6 +17,37 @@ Entry format:
 
 ---
 
+## 2026-08-28 — Back view, and a git history to keep it in
+
+**Shipped:** `assets/figure/back.svg`, generated from the same profile as the front.
+Repo is now under git; everything built across the two prior sessions is committed as
+a clean baseline before this change.
+
+**Learned:**
+
+- **The back view was cheaper than the front one was.** Body width doesn't change
+  front-to-back, so every silhouette, region, chain and part in `regions.json` is
+  already correct for the back — only the interior surface drawing had to be authored.
+  `build_figure.py` now takes a `detail_pts` table per view and shares everything else.
+- **First pass at the back anatomy was wrong in an instructive way.** Three broad arcs
+  (shoulder blade, lat, glute) each spanning most of the torso width rendered as one
+  merged dome instead of three distinct features — the same lesson as the very first
+  forearm attempt days ago: anatomy lines need to hug their own region tightly, or
+  Catmull-Rom smoothing through widely spaced points reads as a blob. Fixed by cutting
+  each curve's span roughly in half.
+- **Nothing about scale, regions, or the warp needed to change.** The whole point of
+  driving both views off one profile is that adding a view is additive.
+
+**Changed:** `regions.json` now carries `artBack`. `specs/001`'s back-view open item is
+closed. Roadmap's "before v1" punch list (git, back view) is now down to app scaffolding.
+
+**Open:**
+- No actual application exists yet — everything to date is the asset pipeline and
+  static proof pages. That's the next real piece of work, not a remaining design
+  question.
+- Still unresolved: visible tap affordance for regions, elliptical limb cross-sections,
+  image storage for the share link, and no artist has seen any of this yet.
+
 ## 2026-08-28 — Parts, and 360° rotation
 
 **Shipped:** Parts matching the mockup — head, neck & torso, hips, left/right arm,

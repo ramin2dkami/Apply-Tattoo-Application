@@ -89,6 +89,24 @@ DETAILS = [   # ("sym"|"center", points) — thin interior lines, as in the refe
 
 NIPPLES = [(6.5,52.5),(-6.5,52.5)]
 
+BACK_DETAILS = [
+    ("sym",    [(3.2,29),(3.7,31.5),(4.0,33.5)]),                  # neck
+    ("sym",    [(4.0,37.5),(8.5,39.5),(13.5,42.5)]),                # trapezius, upper
+    ("sym",    [(6.0,44),(9.2,52),(9.6,60),(7.8,66)]),              # shoulder blade
+    ("center", [(0,36.5),(0,84)]),                                  # spine
+    ("sym",    [(1.4,58),(4.6,62),(6.6,70),(7.6,80)]),              # lat, hugs the side
+    ("sym",    [(1.2,79),(4.8,81.5),(8.0,80)]),                     # lower-back crease
+    ("sym",    [(0,86.8),(9,87.2),(18.7,88.6)]),                    # waistband
+    ("center", [(0,97),(0,109)]),                                   # shorts crease
+    ("sym",    [(12.2,109.4),(17.0,108.8)]),                        # shorts hem
+    ("sym",    [(4.0,89),(7.6,92.5),(10.0,98)]),                    # glute, upper edge
+    ("sym",    [(5.6,131.5),(9.2,130.8),(12.8,132.0)]),             # knee
+    ("sym",    [(6.4,136.5),(12.0,136.0)]),
+    ("sym",    [(6.6,148),(9.2,157),(9.6,168)]),                    # calf, outer belly
+    ("sym",    [(3.4,151),(4.4,162),(5.6,174)]),                    # calf, inner
+]
+
+
 # ---------------------------------------------------------------- regions
 # Regions are viewBox windows into the one figure. A CHAIN is a run of regions that
 # share a continuous surface, so a tattoo may span them: select forearm + upper arm
@@ -176,26 +194,32 @@ def open_path(pts, flip=False):
     return "M %.1f %.1f " % P[0] + catmull(P)
 
 # ---------------------------------------------------------------- emit
-def build():
+def render_svg(view, detail_pts, with_face, with_nipples):
+    """The silhouette is identical front/back — body width doesn't change from the
+    back. Only the interior surface drawing (and whether the face/ears show) differs,
+    so front.svg and back.svg share every shape function and every geometry number
+    used by regions/parts/chains. Nothing about scale or the warp changes with view."""
     body, details = [], []
-
     for name, kind, pts in SHAPES:
+        if name in ("head", "ear") and not with_face and kind != "sym":
+            pass  # ears still drawn; only the face DETAILS are skipped, below
         if kind == "sym":
             body.append(f'<path class="fill" d="{closed(pts, "sym")}"/>')
         else:
             body.append(f'<path class="fill" d="{closed(pts, "side")}"/>')
             body.append(f'<path class="fill" d="{closed(pts, "side", flip=True)}"/>')
 
-    for kind, pts in DETAILS:
+    for kind, pts in detail_pts:
         if kind == "center":
             details.append(f'<path d="{open_path(pts)}"/>')
         else:
             details.append(f'<path d="{open_path(pts)}"/>')
             details.append(f'<path d="{open_path(pts, flip=True)}"/>')
-    for x, y in NIPPLES:
-        details.append(f'<circle cx="{X(x)}" cy="{Y(y)}" r="{0.55*PX_PER_CM:.1f}"/>')
+    if with_nipples:
+        for x, y in NIPPLES:
+            details.append(f'<circle cx="{X(x)}" cy="{Y(y)}" r="{0.55*PX_PER_CM:.1f}"/>')
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Neutral line drawing of a human figure, front view">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Neutral line drawing of a human figure, {view} view">
   <style>
     .fill  {{ fill: var(--body-fill, #fff); stroke: var(--body-line, #1a1a1a);
               stroke-width: 2.6; stroke-linejoin: round; }}
@@ -211,6 +235,11 @@ def build():
   </g>
 </svg>
 '''
+
+
+def build():
+    svg      = render_svg("front", DETAILS,      with_face=True,  with_nipples=True)
+    svg_back = render_svg("back",  BACK_DETAILS, with_face=False, with_nipples=False)
 
     CXPX = CX_CM * PX_PER_CM
     def mirror_sil(sil):
@@ -278,6 +307,7 @@ def build():
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "front.svg").write_text(svg)
+    (OUT / "back.svg").write_text(svg_back)
     parts = []
     for pt in PARTS:
         y0, y1 = pt["y"]
@@ -302,12 +332,12 @@ def build():
             })
 
     (OUT / "regions.json").write_text(json.dumps(
-        {"figure": {"art": "front.svg", "heightCm": 180,
+        {"figure": {"art": "front.svg", "artBack": "back.svg", "heightCm": 180,
                     "canvas": {"width": W, "height": H}, "pxPerCm": PX_PER_CM},
          "parts": parts, "chains": chain_out, "regions": regions},
         indent=2) + "\n")
 
-    print(f"front.svg  {W}x{H}  {PX_PER_CM} px/cm  180 cm figure")
+    print(f"front.svg + back.svg  {W}x{H}  {PX_PER_CM} px/cm  180 cm figure")
     for r in regions:
         rd = r["referenceDimension"]
         print(f"  {r['id']:14} {rd['label']:24} {rd['cm']:>3} cm  "

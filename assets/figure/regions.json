@@ -1,6 +1,7 @@
 {
   "figure": {
     "art": "front.svg",
+    "artBack": "back.svg",
     "heightCm": 180,
     "canvas": {
       "width": 900,

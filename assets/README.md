@@ -46,8 +46,10 @@ every angle — rotation changes which skin faces the viewer, not the outline. T
 is not circular and its front and back are different drawings, so it steps between
 views. See `specs/007-rotate-part.md`.
 
-**Not yet drawn: the back view.** It is the only part of the mockup that needs a new
-profile rather than falling out of what exists.
+**Back view:** `figure/back.svg`. Same silhouette as the front — body width doesn't
+change front-to-back, so every region/chain/part geometry number is shared — with its
+own `BACK_DETAILS` table for the surface drawing (spine, shoulder blades, lats, glutes,
+hamstrings). No face, no nipples.
 
 ## Chains — spanning a joint
 
