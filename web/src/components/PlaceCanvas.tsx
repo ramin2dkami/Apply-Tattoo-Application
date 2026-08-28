@@ -3,48 +3,40 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FigureSvg } from "./FigureSvg";
 import { prepareArtwork } from "@/lib/image";
-import {
-  formatSize, surfaceAt, unionViewBox,
-  type FigureData, type Surfaceable, type ViewBox,
-} from "@/lib/geometry";
+import { formatSize, surfaceAt, type Part, type Surfaceable, type ViewBox } from "@/lib/geometry";
 import { render, type Placement } from "@/lib/warp";
 
 const MIN_CM = 1.5;
 const MAX_CM = 40;
 const HANDLE = 13;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
 
 type Corner = "tl" | "tr" | "bl" | "br";
 const OPPOSITE: Record<Corner, Corner> = { tl: "br", tr: "bl", bl: "tr", br: "tl" };
 
 export function PlaceCanvas({
-  data, selected, image,
+  part, image, onRemove, proceduralPxPerCm,
 }: {
-  data: FigureData;
-  selected: string[];
+  part: Part;
   image: HTMLImageElement;
+  onRemove: () => void;
+  /** px/cm for the assembled-figure fallback (head, hips) — real art carries its own. */
+  proceduralPxPerCm: number;
 }) {
-  const chosen = useMemo(
-    () => data.parts.filter((p) => selected.includes(p.id)),
-    [data, selected],
-  );
-
-  /* A single part with real art is shown as-is — the actual reference drawing, not a
-   * crop of the assembled body. Several parts (or a part we lack real art for, like
-   * head/hips right now) fall back to the procedural figure, since spanning a joint
-   * needs one shared coordinate space that only the assembled body provides. */
-  const single = chosen.length === 1 ? chosen[0] : null;
-  const real = single?.real ?? null;
-
-  const art = real ? real.art : chosen.every((p) => p.view === "back") ? "back.svg" : "front.svg";
+  /* A part with real art shows the actual reference drawing. Otherwise (head, hips —
+   * their traces came back broken, see assets/README.md) it falls back to the
+   * procedural one. Either way this card renders exactly one part, in that part's own
+   * coordinate space — no union with anything else. */
+  const real = part.real ?? null;
+  const art = real ? real.art : part.art;
   const mirror = real?.mirror ?? false;
-  const pxPerCm = real ? real.pxPerCm : data.figure.pxPerCm;
-  const vb: ViewBox = useMemo(
-    () => (real ? real.viewBox : unionViewBox(chosen)),
-    [real, chosen],
-  );
+  const pxPerCm = real ? real.pxPerCm : proceduralPxPerCm;
+  const vb: ViewBox = real ? real.viewBox : part.viewBox;
   const surfaces: Surfaceable[] = useMemo(
-    () => (real ? [{ viewBox: real.viewBox, surface: { silhouette: real.silhouette } }] : chosen),
-    [real, chosen],
+    () => (real ? [{ viewBox: real.viewBox, surface: { silhouette: real.silhouette } }]
+                : [{ viewBox: part.viewBox, surface: part.surface }]),
+    [real, part],
   );
 
   const host = useRef<HTMLDivElement>(null);
@@ -62,15 +54,14 @@ export function PlaceCanvas({
     const acrossCm = surf ? (surf.r * 2) / pxPerCm : 12;
     return { cx, cy, widthCm: clamp(acrossCm * 0.62, MIN_CM, MAX_CM) };
   });
-  const placedKey = useRef(selected.join(","));
-  if (placedKey.current !== selected.join(",")) {
-    placedKey.current = selected.join(",");
-    const cx = vb[0] + vb[2] / 2;
-    const cy = vb[1] + vb[3] / 2;
-    const surf = surfaceAt(surfaces, cx, cy);
-    const acrossCm = surf ? (surf.r * 2) / pxPerCm : 12;
-    setPlace({ cx, cy, widthCm: clamp(acrossCm * 0.62, MIN_CM, MAX_CM) });
+
+  // ---- view zoom/pan, independent of the tattoo's own placement ----
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  function zoomBy(f: number) {
+    setZoom((z) => clamp(z * f, MIN_ZOOM, MAX_ZOOM));
   }
+  function resetView() { setZoom(1); setPan({ x: 0, y: 0 }); }
 
   useEffect(() => {
     const el = host.current;
@@ -109,6 +100,10 @@ export function PlaceCanvas({
     draw();
   }, [box, dpr, draw]);
 
+  /* getBoundingClientRect on the (visually zoomed) stage already reflects the CSS
+   * transform, so figure-space math below stays correct at any zoom level for free —
+   * and a given finger movement naturally maps to a smaller figure-space delta when
+   * zoomed in, which is exactly the finer control zooming is for. */
   const toFig = useCallback(
     (clientX: number, clientY: number) => {
       const r = host.current!.querySelector(".stage")!.getBoundingClientRect();
@@ -120,29 +115,69 @@ export function PlaceCanvas({
     [vb],
   );
 
-  // ---- move (drag body) ----
-  const dragging = useRef<{ x: number; y: number } | null>(null);
-  function bodyDown(e: React.PointerEvent) {
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    dragging.current = { x: e.clientX, y: e.clientY };
-  }
-  function bodyMove(e: React.PointerEvent) {
-    if (!dragging.current) return;
-    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const dx = ((e.clientX - dragging.current.x) / r.width) * vb[2];
-    const dy = ((e.clientY - dragging.current.y) / r.height) * vb[3];
-    dragging.current = { x: e.clientX, y: e.clientY };
-    setPlace((p) => ({
-      ...p,
-      cx: clamp(p.cx + dx, vb[0], vb[0] + vb[2]),
-      cy: clamp(p.cy + dy, vb[1], vb[1] + vb[3]),
-    }));
-  }
-  function bodyUp() { dragging.current = null; }
+  // ---- gesture routing on the stage surface ----
+  // One finger acts on the tattoo (move); two fingers act on the view (pinch-zoom
+  // and pan) — the same split most drawing apps use, and it keeps the two concerns
+  // from fighting over the same gesture.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const pinchStart = useRef<{
+    dist: number; zoom: number; pan: { x: number; y: number };
+    mid: { x: number; y: number };
+  } | null>(null);
 
-  // ---- Figma-style corner handles: drag a corner, the opposite corner anchors,
-  // the box scales uniformly (aspect ratio always locked — nobody wants a stretched
-  // tattoo, and an artist can't quote from one). ----
+  function surfaceDown(e: React.PointerEvent) {
+    // State tracking must not depend on capture succeeding — a synthetic or
+    // otherwise unusual pointer can make setPointerCapture throw, and losing the
+    // pointer map entry when that happens breaks gesture tracking silently.
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch {}
+    if (pointers.current.size === 1) {
+      dragStart.current = { x: e.clientX, y: e.clientY };
+    } else if (pointers.current.size === 2) {
+      dragStart.current = null;
+      const [a, b] = [...pointers.current.values()];
+      pinchStart.current = {
+        dist: Math.hypot(a.x - b.x, a.y - b.y), zoom, pan: { ...pan },
+        mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+      };
+    }
+  }
+  function surfaceMove(e: React.PointerEvent) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size >= 2 && pinchStart.current) {
+      const [a, b] = [...pointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const nz = clamp(pinchStart.current.zoom * (dist / pinchStart.current.dist), MIN_ZOOM, MAX_ZOOM);
+      setZoom(nz);
+      setPan({
+        x: pinchStart.current.pan.x + (mid.x - pinchStart.current.mid.x),
+        y: pinchStart.current.pan.y + (mid.y - pinchStart.current.mid.y),
+      });
+      return;
+    }
+    if (dragStart.current) {
+      const r = host.current!.querySelector(".stage")!.getBoundingClientRect();
+      const dx = ((e.clientX - dragStart.current.x) / r.width) * vb[2];
+      const dy = ((e.clientY - dragStart.current.y) / r.height) * vb[3];
+      dragStart.current = { x: e.clientX, y: e.clientY };
+      setPlace((p) => ({
+        ...p,
+        cx: clamp(p.cx + dx, vb[0], vb[0] + vb[2]),
+        cy: clamp(p.cy + dy, vb[1], vb[1] + vb[3]),
+      }));
+    }
+  }
+  function surfaceUp(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinchStart.current = null;
+    if (pointers.current.size === 0) dragStart.current = null;
+  }
+
+  // ---- Figma-style corner handles: aspect ratio always locked ----
   const hCm = place.widthCm * (src.height / src.width);
   const resizing = useRef<{
     corner: Corner; anchor: { x: number; y: number };
@@ -151,16 +186,16 @@ export function PlaceCanvas({
 
   function handleDown(corner: Corner, e: React.PointerEvent) {
     e.stopPropagation();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch {}
     const halfW = (place.widthCm * pxPerCm) / 2;
     const halfH = (hCm * pxPerCm) / 2;
     const sign = { tl: [-1, -1], tr: [1, -1], bl: [-1, 1], br: [1, 1] }[corner];
     const opp = { tl: [1, 1], tr: [-1, 1], bl: [1, -1], br: [-1, -1] }[OPPOSITE[corner]];
     const anchor = { x: place.cx - opp[0] * halfW, y: place.cy - opp[1] * halfH };
     const corner0 = { x: place.cx + sign[0] * halfW, y: place.cy + sign[1] * halfH };
-    const startDist = Math.hypot(corner0.x - anchor.x, corner0.y - anchor.y);
     resizing.current = {
-      corner, anchor, startDist, startCx: place.cx, startCy: place.cy, startW: place.widthCm,
+      corner, anchor, startDist: Math.hypot(corner0.x - anchor.x, corner0.y - anchor.y),
+      startCx: place.cx, startCy: place.cy, startW: place.widthCm,
     };
   }
   function handleMove(e: React.PointerEvent) {
@@ -170,10 +205,10 @@ export function PlaceCanvas({
     const dist = Math.hypot(p.x - st.anchor.x, p.y - st.anchor.y);
     const s = st.startDist > 0 ? dist / st.startDist : 1;
     const newW = clamp(st.startW * s, MIN_CM, MAX_CM);
-    const clampedS = newW / st.startW;
+    const cs = newW / st.startW;
     setPlace({
-      cx: st.anchor.x + (st.startCx - st.anchor.x) * clampedS,
-      cy: st.anchor.y + (st.startCy - st.anchor.y) * clampedS,
+      cx: st.anchor.x + (st.startCx - st.anchor.x) * cs,
+      cy: st.anchor.y + (st.startCy - st.anchor.y) * cs,
       widthCm: newW,
     });
   }
@@ -192,10 +227,31 @@ export function PlaceCanvas({
 
   return (
     <div className="card p-4">
-      <div ref={host} className="flex h-[38vh] min-h-[280px] items-center justify-center">
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="text-[14px] font-extrabold tracking-[-0.02em]">{part.label}</span>
+        <button
+          onClick={onRemove}
+          className="flex h-7 w-7 items-center justify-center rounded-full"
+          style={{ background: "#f4f2fa" }}
+          aria-label={`Remove ${part.label}`}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6880"
+               strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+
+      <div ref={host} className="relative h-[34vh] min-h-[240px] overflow-hidden rounded-2xl" style={{ background: "#fbfaff" }}>
         <div
-          className="stage relative touch-none select-none"
-          style={{ width: box.w || 1, height: box.h || 1 }}
+          className="stage absolute left-1/2 top-1/2 touch-none select-none"
+          style={{
+            width: box.w || 1, height: box.h || 1,
+            transform: `translate(-50%,-50%) translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
+            transition: pinchStart.current ? "none" : "transform .12s ease-out",
+          }}
+          onPointerDown={surfaceDown}
+          onPointerMove={surfaceMove}
+          onPointerUp={surfaceUp}
+          onPointerCancel={surfaceUp}
         >
           <FigureSvg
             art={art} mirror={mirror} viewBox={vb}
@@ -206,21 +262,10 @@ export function PlaceCanvas({
             className="pointer-events-none absolute inset-0"
             style={{ width: "100%", height: "100%" }}
           />
-          {/* drag-to-move surface, under the handles */}
-          <div
-            className="absolute inset-0 touch-none"
-            onPointerDown={bodyDown}
-            onPointerMove={bodyMove}
-            onPointerUp={bodyUp}
-            onPointerCancel={bodyUp}
-          />
           {box.w > 0 && (
             <div
               className="pointer-events-none absolute"
-              style={{
-                left: corners.tl.x, top: corners.tl.y, width: wPx, height: hPx,
-                border: "1.5px solid var(--violet)",
-              }}
+              style={{ left: corners.tl.x, top: corners.tl.y, width: wPx, height: hPx, border: "1.5px solid var(--violet)" }}
             >
               {(Object.keys(corners) as Corner[]).map((c) => (
                 <div
@@ -243,6 +288,18 @@ export function PlaceCanvas({
                 />
               ))}
             </div>
+          )}
+        </div>
+
+        <div className="absolute bottom-2.5 right-2.5 flex flex-col overflow-hidden rounded-xl" style={{ boxShadow: "0 2px 10px rgba(20,18,31,.16)" }}>
+          <ZoomBtn onClick={() => zoomBy(1.4)} label="Zoom in">+</ZoomBtn>
+          <div style={{ height: 1, background: "#eee9f7" }} />
+          <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="Zoom out">−</ZoomBtn>
+          {zoom !== 1 && (
+            <>
+              <div style={{ height: 1, background: "#eee9f7" }} />
+              <ZoomBtn onClick={resetView} label="Reset zoom" small>⟲</ZoomBtn>
+            </>
           )}
         </div>
       </div>
@@ -284,10 +341,25 @@ export function PlaceCanvas({
       </div>
 
       <p className="mt-3 text-[12.5px] leading-snug text-[var(--muted)]">
-        Drag the tattoo to move it, drag a corner to resize. The figure shows average
-        proportions, so this is the size you want — not a measurement of your body.
+        One finger to move the tattoo, drag a corner to resize. Two fingers to zoom
+        and pan your view — it doesn&apos;t change the tattoo, just how closely you&apos;re looking.
       </p>
     </div>
+  );
+}
+
+function ZoomBtn({
+  onClick, label, small, children,
+}: { onClick: () => void; label: string; small?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-9 w-9 items-center justify-center bg-white font-bold text-[var(--ink)]"
+      style={{ fontSize: small ? 15 : 19 }}
+    >
+      {children}
+    </button>
   );
 }
 

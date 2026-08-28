@@ -17,6 +17,60 @@ Entry format:
 
 ---
 
+## 2026-08-29 — Mobile-first: bottom sheet, per-part cards, pinch-zoom
+
+**Shipped:** Rebuilt the interaction model around mobile gestures.
+
+- **Add body part → bottom sheet.** After upload, an "Add a body part" button appears;
+  tapping it slides up a sheet (drag handle, backdrop dismiss, drag-down-to-dismiss)
+  with the tappable figure and a checklist. Selections apply live; "Done" closes it.
+- **Each part is its own card**, not a merged view. Selecting several parts in the
+  sheet adds several independent cards to the page, each with its own drawing,
+  position, and size — not a shared canvas. This retired the spanning-chain mechanism
+  from two days ago (see D9 in `context/decisions.md`): now that a "part" is already a
+  whole limb, the case spanning existed for (crossing the elbow) lives inside one
+  part's own drawing, and cross-part spanning was always the weaker procedural
+  fallback anyway since real art only ever covers one part.
+- **Two-finger pinch to zoom/pan the view**, separate from the tattoo's own size. One
+  finger moves the tattoo, two fingers navigate the view — the same split most drawing
+  apps use, chosen so the two gestures never compete for the same touch.
+
+**Learned:**
+
+- **A transformed element's `getBoundingClientRect()` already accounts for CSS zoom,
+  for free.** The drag-to-move and corner-resize math both read the stage's live
+  bounding rect, so applying pinch-zoom as a CSS transform on that same element made
+  every downstream calculation correct at any zoom level with no special-casing — and
+  as a bonus, a given finger movement naturally produces a smaller placement-space
+  delta when zoomed in, which is exactly the finer control zooming is supposed to buy.
+- **Synthetic `PointerEvent`s can't hold `setPointerCapture`,** and firing a whole
+  down/move/up gesture in one synchronous tick doesn't reliably reach a two-pointer
+  state either — real touches always have natural micro-delays the synthetic dispatch
+  didn't. Not a product bug, but it did surface a real one: `setPointerCapture` was
+  being called *before* the pointer got recorded in the tracking map, so if capture
+  ever throws, gesture tracking breaks silently with no error surfaced to the user.
+  Reordered so state tracking never depends on capture succeeding, and wrapped the
+  capture call itself so a throw can't take down the handler.
+- **Verify gestures with a delayed, realistic event sequence, not an instant one.**
+  The first pinch test produced no zoom at all and looked like a dead feature; adding
+  ~100ms between down/move events (closer to how two real fingers actually land)
+  showed it working correctly up to the 4x clamp. Concluding "broken" from the fast
+  version would have been the wrong lesson.
+
+**Changed:** `PlaceCanvas` now takes one `part`, not a list + union geometry —
+`unionViewBox`/multi-part `surfaceAt` calls are gone from it, though the functions stay
+in `geometry.ts` since `surfaceAt` is still used per-card. `PartsPicker` moved from an
+inline disabled card into `BottomSheet` content. New `UploadCard` (trimmed, no
+"Continue" button — everything is always live now, nothing gated behind steps).
+
+**Open:**
+- Drag-down-to-dismiss on the sheet is implemented but only tested via synthetic
+  events, same caveat as the pinch gesture above.
+- Cross-part spanning (shoulder onto arm) has no path back if someone asks for it —
+  noted as the reversal condition on D9, not rebuilt speculatively.
+- Head and hips still need re-traced source files; `04_right_arm.svg` still missing.
+- No share link. No real-phone test. No artist has seen any of this.
+
 ## 2026-08-29 — Real reference artwork, single-page flow, Figma-style resize
 
 **Shipped:** Three changes in one pass.

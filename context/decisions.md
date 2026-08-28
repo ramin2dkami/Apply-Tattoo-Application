@@ -146,3 +146,26 @@ picker automatically.
 
 This is also why the earlier "individual SVGs vs one figure" question had no real
 tension in it: the source of truth is the measurements, and any view is a projection.
+
+---
+
+### D9 — One card per body part, no cross-part spanning (2026-08-29)
+
+**Decision:** Each added body part gets its own independent placement card — its own
+drawing, its own tattoo position, its own size. Selecting several parts in the picker
+adds several cards, not one merged view. The earlier "spanning chain" mechanism (two
+regions of one limb merged into a single warped surface, e.g. upper-arm + forearm
+across the elbow) is retired.
+
+**Why:** Real per-part artwork (D-whatever, the traced SVGs) only ever applies to one
+part at a time — a merged view of two different parts never had real art to show
+anyway, so it was always the weaker procedural fallback. Now that each part is a whole
+limb already (not upper-arm/forearm as separate choices), the case spanning existed to
+solve — a piece crossing the elbow — is already handled inside one part's own drawing.
+What's left (a tattoo genuinely crossing from torso onto an arm) is rare, and one card
+per part is a far simpler, more predictable mobile pattern: tap to add, see it appear,
+tap to remove.
+
+**Reverse if:** customers meaningfully ask to preview one continuous design across two
+unrelated parts (shoulder blade onto the back of the arm, say). That would need a
+resurrected shared-coordinate-space mode, kept as an option rather than the default.

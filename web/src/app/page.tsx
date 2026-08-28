@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { UploadCard } from "@/components/UploadCard";
 import { PartsPicker } from "@/components/PartsPicker";
 import { PlaceCanvas } from "@/components/PlaceCanvas";
+import { BottomSheet } from "@/components/BottomSheet";
 import type { FigureData } from "@/lib/geometry";
 
 export default function Home() {
   const [data, setData] = useState<FigureData | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [added, setAdded] = useState<string[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     fetch("/figure/parts.json").then((r) => r.json()).then(setData).catch(() => {});
@@ -18,6 +20,8 @@ export default function Home() {
   if (!data) {
     return <div className="flex min-h-dvh items-center justify-center text-[var(--muted)]">Loading…</div>;
   }
+
+  const addedParts = data.parts.filter((p) => added.includes(p.id));
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-5 pb-10 pt-12">
@@ -29,50 +33,40 @@ export default function Home() {
         </p>
       </div>
 
-      <Step n={1} title="Upload your design" done={!!image}>
-        <UploadCard image={image} onImage={(img) => setImage(img)} />
-      </Step>
+      <UploadCard image={image} onImage={(img) => setImage(img)} />
 
-      <Step n={2} title="Where do you want it?" done={selected.length > 0}>
+      {image && (
+        <>
+          {addedParts.map((p) => (
+            <PlaceCanvas
+              key={p.id}
+              part={p}
+              image={image}
+              proceduralPxPerCm={data.figure.pxPerCm}
+              onRemove={() => setAdded((s) => s.filter((x) => x !== p.id))}
+            />
+          ))}
+
+          <button
+            onClick={() => setSheetOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-[18px] border-2 border-dashed py-4 text-[15px] font-bold tracking-[-0.01em] text-[var(--violet)] transition-colors active:bg-[var(--violet-lt)]"
+            style={{ borderColor: "#c9bdf2" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            {addedParts.length === 0 ? "Add a body part" : "Add another body part"}
+          </button>
+        </>
+      )}
+
+      <BottomSheet open={sheetOpen} title="Where do you want it?" onClose={() => setSheetOpen(false)}>
         <PartsPicker
           data={data}
-          selected={selected}
-          disabled={!image}
-          onToggle={(id) =>
-            setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
-          }
+          selected={added}
+          onToggle={(id) => setAdded((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))}
+          onDone={() => setSheetOpen(false)}
         />
-      </Step>
-
-      {image && selected.length > 0 && (
-        <Step n={3} title="Place and size it" done={false}>
-          <PlaceCanvas data={data} selected={selected} image={image} />
-        </Step>
-      )}
+      </BottomSheet>
     </div>
-  );
-}
-
-function Step({
-  n, title, done, children,
-}: {
-  n: number; title: string; done: boolean; children: React.ReactNode;
-}) {
-  return (
-    <section className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="mb-2 flex items-center gap-2">
-        <span
-          className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-          style={{
-            background: done ? "var(--violet)" : "#e7e4f0",
-            color: done ? "#fff" : "var(--muted)",
-          }}
-        >
-          {done ? "✓" : n}
-        </span>
-        <h2 className="text-[15px] font-bold tracking-[-0.02em]">{title}</h2>
-      </div>
-      {children}
-    </section>
   );
 }

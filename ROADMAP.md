@@ -21,7 +21,9 @@ the product.
 - [x] **Tattoo upload.** Drag/drop or file picker. PNG with transparency is the happy
       path; JPG gets a background-removal nudge, not a blocker.
       Spec: `specs/002-tattoo-upload.md`
-- [~] **Place, size, rotate.** Drag to move, pinch/handles to resize, rotate, adjust
+- [~] **Place, size, rotate.** Mobile-first now: bottom sheet to add parts, each
+      part its own card, Figma-style corner handles, two-finger pinch to zoom/pan
+      the view independent of the tattoo's own size. Drag to move, pinch/handles to resize, rotate, adjust
       opacity. Must feel good on a touchscreen — this is the whole app.
       Spec: `specs/003-place-size-rotate.md`
 - [x] **Real-world size readout.** Live "4.5 in × 3.1 in" derived from the body
