@@ -47,16 +47,17 @@ export function BottomSheet({
           boxShadow: "0 -8px 40px rgba(20,18,31,.22)",
         }}
       >
+        {/* All spacing below is on an 8pt grid (Tailwind 2/4/6/8 = 8/16/24/32px). */}
         <div
-          className="flex shrink-0 cursor-grab touch-none flex-col items-center pb-2 pt-3 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab touch-none flex-col items-center pb-2 pt-4 active:cursor-grabbing"
           onPointerDown={down}
           onPointerMove={move}
           onPointerUp={up}
           onPointerCancel={up}
         >
-          <div className="h-[5px] w-9 rounded-full" style={{ background: "#e2ddf0" }} />
+          <div className="h-1 w-8 rounded-full" style={{ background: "#e2ddf0" }} />
         </div>
-        <div className="flex shrink-0 items-center justify-between px-5 pb-3">
+        <div className="flex shrink-0 items-center justify-between px-6 pb-4">
           <h2 className="text-[17px] font-extrabold tracking-[-0.02em]">{title}</h2>
           <button
             onClick={onClose}
@@ -69,15 +70,15 @@ export function BottomSheet({
           </button>
         </div>
         <div
-          className="min-h-0 flex-1 overflow-y-auto px-5"
-          style={!footer ? { paddingBottom: "max(20px, env(safe-area-inset-bottom))" } : undefined}
+          className="min-h-0 flex-1 overflow-y-auto px-6"
+          style={{ paddingBottom: footer ? 24 : "max(24px, env(safe-area-inset-bottom))" }}
         >
           {children}
         </div>
         {footer && (
           <div
-            className="shrink-0 border-t px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3"
-            style={{ borderColor: "var(--line)" }}
+            className="shrink-0 border-t px-6 pt-4"
+            style={{ borderColor: "var(--line)", paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
           >
             {footer}
           </div>
