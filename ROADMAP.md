@@ -12,24 +12,25 @@ Status key: `[ ]` not started · `[~]` in progress · `[x]` done
 The whole loop, roughly done, end to end. Nothing here is optional; together they are
 the product.
 
-- [~] **Body part picker.** Tap a part on the figure: head, neck & torso, back, hips,
+- [x] **Body part picker.** Tap a part on the figure: head, neck & torso, back, hips,
       left/right arm, left/right leg. Multi-select, so a piece can span a joint.
       Spec: `specs/001-body-part-picker.md`
-- [ ] **Rotate the part.** Drag to spin a limb through 360&deg; and place the tattoo on
+- [ ] **Rotate the part.** Maths proven, not yet wired into the app. Drag to spin a limb through 360&deg; and place the tattoo on
       any side. Head, torso and hips step between front and back views.
       Spec: `specs/007-rotate-part.md`
-- [ ] **Tattoo upload.** Drag/drop or file picker. PNG with transparency is the happy
+- [x] **Tattoo upload.** Drag/drop or file picker. PNG with transparency is the happy
       path; JPG gets a background-removal nudge, not a blocker.
       Spec: `specs/002-tattoo-upload.md`
-- [ ] **Place, size, rotate.** Drag to move, pinch/handles to resize, rotate, adjust
+- [~] **Place, size, rotate.** Drag to move, pinch/handles to resize, rotate, adjust
       opacity. Must feel good on a touchscreen — this is the whole app.
       Spec: `specs/003-place-size-rotate.md`
-- [ ] **Real-world size readout.** Live "4.5 in × 3.1 in" derived from the body
+- [x] **Real-world size readout.** Live "4.5 in × 3.1 in" derived from the body
       part's reference dimension. Toggle cm/inches.
       Spec: `specs/004-real-world-sizing.md`
-- [ ] **Contour to the body.** Warp the tattoo to the body part's surface using a
+- [x] **Contour to the body.** Warp the tattoo to the body part's surface using a
       per-asset displacement map, so it reads as skin, not a sticker.
-      Spec: `specs/005-contour-warp.md`
+      Spec: `specs/005-contour-warp.md`. Radius resolved per row; ships with a
+      flat/contoured toggle.
 - [ ] **Shareable link.** "Send to my artist" produces a URL showing the composite
       image, the body part, the placement, and the size. No login for either side.
       Spec: `specs/006-share-link.md`

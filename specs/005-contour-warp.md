@@ -1,6 +1,6 @@
 # 005 — Contour warp
 
-**Status:** draft
+**Status:** shipped
 **Roadmap item:** Now / Prototype v1
 
 ## What it does

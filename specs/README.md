@@ -13,10 +13,10 @@ what shipped. A spec that describes code we didn't write is worse than no spec.
 
 | # | Feature | Status |
 |---|---|---|
-| 001 | Body part picker | draft |
-| 002 | Tattoo upload | draft |
-| 003 | Place, size, rotate | draft |
-| 004 | Real-world sizing | draft |
-| 005 | Contour warp | draft |
+| 001 | Body part picker | shipped |
+| 002 | Tattoo upload | shipped |
+| 003 | Place, size, rotate | building |
+| 004 | Real-world sizing | shipped |
+| 005 | Contour warp | shipped |
 | 006 | Share link | draft |
 | 007 | Rotate the part | draft |

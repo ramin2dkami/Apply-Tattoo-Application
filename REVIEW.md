@@ -17,6 +17,51 @@ Entry format:
 
 ---
 
+## 2026-08-28 — Version 1 runs end to end
+
+**Shipped:** The application, in `web/`. Next.js + TypeScript + Tailwind, phone-first,
+styled to the reference: violet primary, white rounded cards, heavy tight headlines.
+The whole loop works — upload a design, pick one or several body parts, drag it into
+place, resize by real centimetres or inches, see it contoured to the skin. Production
+build passes.
+
+**Learned:**
+
+- **The size readout was wrong, in exactly the way `specs/004` predicted and I still
+  didn't implement.** It measured the uploaded PNG's bounding box, transparent padding
+  included. The test artwork filled 56% of its file, so a tattoo reported as 5.3 cm was
+  drawing at 3.0 cm — and the aspect ratio was wrong too (5.3 × 6.5 rather than
+  5.3 × 10.5). Most tattoo PNGs arrive with generous margins, so this would have been
+  wrong for nearly every real upload. Caught by measuring the rendered ink in the
+  canvas rather than trusting the screenshot; the fix trims to the ink at load, so
+  everything downstream is in terms of the artwork. Writing the warning in the spec was
+  evidently not enough to stop me shipping the bug.
+- **An SVG and a canvas overlay must not each pick their own scale.** With
+  `preserveAspectRatio`, the SVG letterboxed itself to 0.54 while the canvas assumed
+  1.14, so the tattoo rendered far off-screen. Fix: compute the stage box from the
+  viewBox aspect in JS and let both share one scale. CSS `aspect-ratio` plus
+  `max-height` does not do this — it keeps the width and violates the ratio.
+- **A default size has to come from the body, not a constant.** 8 cm on an 8.4 cm arm
+  wraps most of the way round; the warp was correct and it still looked broken. Default
+  is now 62% of the local limb width.
+- **Verify canvas work by measuring pixels.** Three visual judgements about the warp
+  were wrong; one `getImageData` bounding-box check settled it in seconds.
+
+**Changed:** Specs 001, 002, 004, 005 marked shipped; 003 building. Roadmap's Now list
+is down to rotation and the share link. `CLAUDE.md` records the real stack and the
+decision to use system fonts rather than a webfont.
+
+**Open:**
+- **Rotation is proven but not wired in.** `specs/007` maths is verified in the proof
+  page; the app has no rotation control yet. Placement is front-view only, which means
+  half the body is still unreachable.
+- **No share link.** `specs/006` is the last piece of the loop, and without it nothing
+  reaches an artist — which is the entire promise.
+- Tattoo rotation and flip aren't implemented (spec 003's remaining items), nor undo.
+- Untested on a real phone. Everything so far is an emulated 375×812 viewport, and
+  spec 003's whole point is how it *feels* under a thumb.
+- Still: no artist has seen any of this.
+
 ## 2026-08-28 — Back view, and a git history to keep it in
 
 **Shipped:** `assets/figure/back.svg`, generated from the same profile as the front.

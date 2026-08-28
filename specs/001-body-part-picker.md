@@ -1,6 +1,6 @@
 # 001 — Body region picker
 
-**Status:** draft
+**Status:** shipped
 **Roadmap item:** Now / Prototype v1
 
 ## What it does

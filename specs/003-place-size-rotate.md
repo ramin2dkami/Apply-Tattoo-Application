@@ -1,6 +1,6 @@
 # 003 — Place, size, rotate
 
-**Status:** draft
+**Status:** building
 **Roadmap item:** Now / Prototype v1
 
 ## What it does

@@ -204,10 +204,10 @@ def render_svg(view, detail_pts, with_face, with_nipples):
         if name in ("head", "ear") and not with_face and kind != "sym":
             pass  # ears still drawn; only the face DETAILS are skipped, below
         if kind == "sym":
-            body.append(f'<path class="fill" d="{closed(pts, "sym")}"/>')
+            body.append(f'<path class="figFill" d="{closed(pts, "sym")}"/>')
         else:
-            body.append(f'<path class="fill" d="{closed(pts, "side")}"/>')
-            body.append(f'<path class="fill" d="{closed(pts, "side", flip=True)}"/>')
+            body.append(f'<path class="figFill" d="{closed(pts, "side")}"/>')
+            body.append(f'<path class="figFill" d="{closed(pts, "side", flip=True)}"/>')
 
     for kind, pts in detail_pts:
         if kind == "center":
@@ -221,16 +221,16 @@ def render_svg(view, detail_pts, with_face, with_nipples):
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Neutral line drawing of a human figure, {view} view">
   <style>
-    .fill  {{ fill: var(--body-fill, #fff); stroke: var(--body-line, #1a1a1a);
+    .figFill  {{ fill: var(--body-fill, #fff); stroke: var(--body-line, #1a1a1a);
               stroke-width: 2.6; stroke-linejoin: round; }}
-    .detail{{ fill: none; stroke: var(--body-line, #1a1a1a); stroke-width: 1.7;
+    .figDetail{{ fill: none; stroke: var(--body-line, #1a1a1a); stroke-width: 1.7;
               stroke-linecap: round; stroke-linejoin: round; opacity: .85; }}
-    .detail circle {{ fill: none; }}
+    .figDetail circle {{ fill: none; }}
   </style>
-  <g class="body">
+  <g class="figBody">
 {chr(10).join("    " + b for b in body)}
   </g>
-  <g class="detail">
+  <g class="figDetail">
 {chr(10).join("    " + d for d in details)}
   </g>
 </svg>

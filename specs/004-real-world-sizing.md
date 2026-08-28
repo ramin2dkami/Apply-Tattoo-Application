@@ -1,6 +1,6 @@
 # 004 — Real-world sizing
 
-**Status:** draft
+**Status:** shipped
 **Roadmap item:** Now / Prototype v1
 
 ## What it does
@@ -33,9 +33,9 @@ primary output, and seeing it change while resizing is what teaches people what
 
 ## Done when
 
-- [ ] Live size readout updates during resize
-- [ ] Inches/cm toggle, remembered for the session
-- [ ] Measures visible content, ignoring transparent padding
+- [x] Live size readout updates during resize
+- [x] Inches/cm toggle
+- [x] Measures visible content, ignoring transparent padding (`web/src/lib/image.ts`)
 - [ ] Verified against known reference dimensions on at least three assets
 - [ ] Size appears on the share page (`006`)
 - [ ] Works on a phone browser

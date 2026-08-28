@@ -30,6 +30,8 @@ stale — update it.
 | `specs/` | One file per feature, written before it gets built. |
 | `demos/` | Scripts and assets for showing the thing to an artist. |
 | `routines/` | Repeatable procedures. Follow them literally. |
+| `assets/` | The generated figure and the tools that build it. Never hand-edit output. |
+| `web/` | The Next.js app. |
 
 ## Standing rules
 
@@ -48,8 +50,11 @@ stale — update it.
 
 ## Technical direction
 
-- **Stack:** Next.js (App Router) + TypeScript + Tailwind. Client-side rendering of
-  the placement canvas.
+- **Stack:** Next.js (App Router) + TypeScript + Tailwind, in `web/`. The placement
+  canvas renders client-side. `npm run dev --prefix web` (port 3100).
+- **Fonts:** system stack, not a webfont. The app is phone-first and the system UI font
+  is already the right register; a Google Font would add a network dependency to the
+  build for no visible gain at these sizes.
 - **Rendering:** HTML canvas / WebGL for the tattoo layer. Body parts are our own
   illustrations (SVG or high-res PNG), which means we know their geometry — that is
   what makes both contouring and real-world sizing possible.
