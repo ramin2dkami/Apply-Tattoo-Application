@@ -1,0 +1,82 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>iPhone preview — Tattoo Placement</title>
+<style>
+  :root {
+    --frame: #1c1c1e;
+    --frame-hi: #3a3a3d;
+    --frame-lo: #0c0c0e;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: radial-gradient(circle at 50% 18%, #edeaf4, #d9d4ea 62%, #c9c2df);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .label {
+    font-size: 12.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
+    color: #6b6480;
+  }
+  .device {
+    position: relative;
+    width: 431px; height: 884px;
+    padding: 18px;
+    border-radius: 68px;
+    background: linear-gradient(155deg, var(--frame-hi), var(--frame) 22%, var(--frame) 78%, var(--frame-lo));
+    box-shadow:
+      0 40px 80px -20px rgba(20,10,40,.45),
+      0 10px 24px -8px rgba(20,10,40,.30),
+      inset 0 0 0 1.5px rgba(255,255,255,.06);
+  }
+  .buttons { position: absolute; }
+  .btn { position: absolute; background: linear-gradient(90deg, #232326, #141416); border-radius: 3px; }
+  .btn.mute   { left: -3px; top: 130px;  width: 4px; height: 30px; }
+  .btn.vol-up { left: -3px; top: 185px;  width: 4px; height: 52px; }
+  .btn.vol-dn { left: -3px; top: 248px;  width: 4px; height: 52px; }
+  .btn.power  { right: -3px; top: 210px; width: 4px; height: 84px; }
+
+  .screen {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 52px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.6);
+    display: flex; flex-direction: column;
+  }
+  /* Reserves real space for the status bar / Dynamic Island, so it never overlaps
+     the app's own content — a live iPhone does this via safe-area insets, which a
+     desktop browser inside an iframe won't report, so the mockup fakes it here. */
+  .statusbar { position: relative; flex: 0 0 59px;
+    background: #d3e2f7; }  /* matches --bg in web/src/app/globals.css — update together */
+  .screen iframe {
+    flex: 1 1 auto; width: 100%; border: 0; display: block; background: #fff;
+  }
+  .island {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 35px; border-radius: 20px; background: #000;
+    z-index: 5; pointer-events: none;
+  }
+  .home {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 140px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.55);
+    z-index: 5; pointer-events: none;
+  }
+</style>
+
+<div class="wrap">
+  <div class="label">iPhone 15 Pro &middot; 393&times;852</div>
+  <div class="device">
+    <div class="btn mute"></div>
+    <div class="btn vol-up"></div>
+    <div class="btn vol-dn"></div>
+    <div class="btn power"></div>
+    <div class="screen">
+      <div class="statusbar"><div class="island"></div></div>
+      <iframe src="http://localhost:3100" title="App preview"></iframe>
+      <div class="home"></div>
+    </div>
+  </div>
+</div>
