@@ -3,12 +3,16 @@
 import { useRef, useState } from "react";
 
 export function BottomSheet({
-  open, title, onClose, children,
+  open, title, onClose, children, footer,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** Pinned below the scrollable content, never inside it — so the primary action
+   *  (e.g. "Done") stays reachable even if the content is taller than the sheet on
+   *  a small phone, instead of getting pushed below the fold. */
+  footer?: React.ReactNode;
 }) {
   const [dragY, setDragY] = useState(0);
   const dragging = useRef<number | null>(null);
@@ -64,9 +68,20 @@ export function BottomSheet({
                  strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[max(20px,env(safe-area-inset-bottom))]">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto px-5"
+          style={!footer ? { paddingBottom: "max(20px, env(safe-area-inset-bottom))" } : undefined}
+        >
           {children}
         </div>
+        {footer && (
+          <div
+            className="shrink-0 border-t px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3"
+            style={{ borderColor: "var(--line)" }}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,25 +6,24 @@ import { silhouettePoints, type FigureData, type Part } from "@/lib/geometry";
 const ORDER = ["torso", "back", "hips", "head", "leg-r", "leg-l", "arm-r", "arm-l"];
 
 export function PartsPicker({
-  data, selected, onToggle, onDone,
+  data, selected, onToggle,
 }: {
   data: FigureData;
   selected: string[];
   onToggle: (id: string) => void;
-  onDone: () => void;
 }) {
   const parts = [...data.parts].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 
   return (
     <div className="flex flex-col">
-      <p className="mb-3 text-[14px] text-[var(--muted)]">
-        Tap the figure or a name. Pick more than one if it spans a joint.
+      <p className="mb-2 text-[13px] text-[var(--muted)]">
+        Tap the figure or a name — more than one if it spans a joint.
       </p>
 
-      <div className="flex justify-center py-1">
+      <div className="flex justify-center">
         <FigureSvg
           viewBox={[0, 0, data.figure.canvas.width, data.figure.canvas.height]}
-          style={{ width: 152, height: 266 }}
+          style={{ width: 108, height: 189 }}
         >
           {parts.map((p: Part) => {
             const on = selected.includes(p.id);
@@ -40,32 +39,32 @@ export function PartsPicker({
         </FigureSvg>
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
         {parts.map((p) => {
           const on = selected.includes(p.id);
           return (
             <button
               key={p.id}
               onClick={() => onToggle(p.id)}
-              className="flex items-center gap-2.5 rounded-2xl px-3.5 py-3 text-left transition-colors"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors"
               style={{ background: on ? "var(--violet)" : "#f4f2fa" }}
             >
               <span
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full"
                 style={{
                   background: on ? "rgba(255,255,255,.25)" : "#fff",
                   border: on ? "none" : "1.5px solid #ddd8ee",
                 }}
               >
                 {on && (
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff"
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff"
                        strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
                 )}
               </span>
               <span
-                className="text-[14px] font-bold tracking-[-0.01em]"
+                className="text-[13.5px] font-bold tracking-[-0.01em]"
                 style={{ color: on ? "#fff" : "var(--ink)" }}
               >
                 {p.label}
@@ -74,12 +73,6 @@ export function PartsPicker({
           );
         })}
       </div>
-
-      <button className="btn btn-primary mt-5" onClick={onDone}>
-        {selected.length === 0
-          ? "Done"
-          : `Done — ${selected.length} ${selected.length > 1 ? "parts" : "part"} added`}
-      </button>
     </div>
   );
 }

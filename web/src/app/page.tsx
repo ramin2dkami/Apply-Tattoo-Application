@@ -59,12 +59,20 @@ export default function Home() {
         </>
       )}
 
-      <BottomSheet open={sheetOpen} title="Where do you want it?" onClose={() => setSheetOpen(false)}>
+      <BottomSheet
+        open={sheetOpen}
+        title="Where do you want it?"
+        onClose={() => setSheetOpen(false)}
+        footer={
+          <button className="btn btn-primary" onClick={() => setSheetOpen(false)}>
+            {added.length === 0 ? "Done" : `Done — ${added.length} ${added.length > 1 ? "parts" : "part"} added`}
+          </button>
+        }
+      >
         <PartsPicker
           data={data}
           selected={added}
           onToggle={(id) => setAdded((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))}
-          onDone={() => setSheetOpen(false)}
         />
       </BottomSheet>
     </div>
