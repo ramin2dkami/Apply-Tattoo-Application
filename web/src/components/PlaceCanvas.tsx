@@ -81,7 +81,11 @@ export function PlaceCanvas({
   }, [avail, vb]);
 
   const dpr = typeof window === "undefined" ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-  const scale = box.w ? (box.w * dpr) / vb[2] : 0;
+  /* The canvas's own pixel buffer has to grow with the view zoom, not just the CSS
+   * box — otherwise zooming in just stretches the same fixed-resolution bitmap larger
+   * (the CSS `scale()` transform on .stage does that automatically), which is exactly
+   * what made the tattoo go blurry while the vector figure stayed crisp. */
+  const scale = box.w ? (box.w * dpr * zoom) / vb[2] : 0;
   const cssScale = box.w ? box.w / vb[2] : 0;
 
   const draw = useCallback(() => {
@@ -95,10 +99,10 @@ export function PlaceCanvas({
   useEffect(() => {
     const c = canvas.current;
     if (!c || !box.w) return;
-    c.width = Math.round(box.w * dpr);
-    c.height = Math.round(box.h * dpr);
+    c.width = Math.round(box.w * dpr * zoom);
+    c.height = Math.round(box.h * dpr * zoom);
     draw();
-  }, [box, dpr, draw]);
+  }, [box, dpr, zoom, draw]);
 
   /* getBoundingClientRect on the (visually zoomed) stage already reflects the CSS
    * transform, so figure-space math below stays correct at any zoom level for free —
