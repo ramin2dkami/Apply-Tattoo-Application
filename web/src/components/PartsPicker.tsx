@@ -1,6 +1,7 @@
 "use client";
 
 import type { FigureData } from "@/lib/geometry";
+import { useLanguage } from "@/lib/i18n";
 
 const ORDER = ["torso", "back", "hips", "head", "leg-r", "leg-l", "arm-r", "arm-l"];
 
@@ -11,6 +12,7 @@ export function PartsPicker({
   selected: string[];
   onToggle: (id: string) => void;
 }) {
+  const { t } = useLanguage();
   const parts = [...data.parts].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 
   return (
@@ -34,7 +36,7 @@ export function PartsPicker({
                 color: on ? "#f5c446" : "rgba(255,255,255,0.55)",
               }}
             >
-              {p.label}
+              {t(`part.${p.id}`, p.label)}
             </span>
           </button>
         );

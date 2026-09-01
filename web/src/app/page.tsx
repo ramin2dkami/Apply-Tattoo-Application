@@ -5,12 +5,15 @@ import { UploadCard, type UploadCardHandle } from "@/components/UploadCard";
 import { PartsPicker } from "@/components/PartsPicker";
 import { PlaceCanvas } from "@/components/PlaceCanvas";
 import { Toast } from "@/components/Toast";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { FigureData } from "@/lib/geometry";
 import { withBasePath } from "@/lib/basePath";
+import { useLanguage } from "@/lib/i18n";
 
 type Step = "upload" | "workspace";
 
 export default function Home() {
+  const { t } = useLanguage();
   const [data, setData] = useState<FigureData | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [added, setAdded] = useState<string[]>([]);
@@ -96,7 +99,7 @@ export default function Home() {
         className="flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
         style={{ height: "var(--app-height, 100dvh)" }}
       >
-        <Toast message="Image uploaded" show={toast} />
+        <Toast message={t("toast.imageUploaded")} show={toast} />
 
         <div
           className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111315]"
@@ -108,16 +111,22 @@ export default function Home() {
             alt="Person reviewing tattoo ideas on their phone"
             className="w-full min-h-0 flex-1 object-cover"
           />
+          <div
+            className="absolute right-4 z-10"
+            style={{ top: "max(16px, calc(env(safe-area-inset-top) + 16px))" }}
+          >
+            <LanguageSwitcher />
+          </div>
           <div className="flex w-full flex-col items-center px-7 pb-7 pt-6">
             <div className="w-full max-w-[260px]">
               <h1
                 className="text-center text-[24px] leading-8 text-white"
                 style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "-0.96px" }}
               >
-                Upload your tattoo design
+                {t("upload.title")}
               </h1>
               <p className="mt-2 text-center text-[14px] leading-[22.75px] text-white/50">
-                Choose an image to unlock placement, scale, and contour tools.
+                {t("upload.subtitle")}
               </p>
               <div className="mt-6 w-full">
                 <UploadCard variant="dark" onImage={(img) => handleImage(img)} />
@@ -137,7 +146,7 @@ export default function Home() {
       className="relative flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
       style={{ height: "var(--app-height, 100dvh)" }}
     >
-      <Toast message="Image uploaded" show={toast} />
+      <Toast message={t("toast.imageUploaded")} show={toast} />
 
       <div
         className="relative min-h-0 flex-1 overflow-hidden px-4 pb-4"
@@ -169,13 +178,13 @@ export default function Home() {
                 className="text-center text-[9px] uppercase text-[#f5c446]"
                 style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.8px" }}
               >
-                Artwork Ready
+                {t("workspace.readyLabel")}
               </p>
               <p
                 className="mt-3 text-center text-[14px] leading-[22.75px] text-white/55"
                 style={{ fontFamily: "var(--font-gabarito)" }}
               >
-                Select a body region to place image and then click save.
+                {t("workspace.readyHint")}
               </p>
             </div>
           </div>
@@ -198,7 +207,7 @@ export default function Home() {
                   color: activeGroup === i ? "#16120a" : "rgba(255,255,255,0.5)",
                 }}
               >
-                {g[0].view === "front" ? "Front" : "Back"}
+                {g[0].view === "front" ? t("nav.front") : t("nav.back")}
               </button>
             ))}
           </div>
@@ -226,7 +235,7 @@ export default function Home() {
               letterSpacing: "1.6px",
             }}
           >
-            Edit
+            {t("nav.edit")}
           </button>
           <button
             onClick={handleShare}
@@ -239,7 +248,7 @@ export default function Home() {
               letterSpacing: "1.6px",
             }}
           >
-            Share
+            {t("nav.share")}
           </button>
         </div>
       </div>
@@ -267,7 +276,7 @@ export default function Home() {
               className="pt-5 text-[18px] leading-7 text-[#f4f1e9]"
               style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "0.45px" }}
             >
-              Edit
+              {t("sheet.title")}
             </h2>
 
             <div className="pt-5">
@@ -275,7 +284,7 @@ export default function Home() {
                 className="text-[10px] uppercase text-white/45"
                 style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.5px" }}
               >
-                Body region
+                {t("sheet.bodyRegion")}
               </p>
               <div className="pt-2">
                 <PartsPicker
@@ -291,7 +300,7 @@ export default function Home() {
                 className="text-[10px] uppercase text-white/45"
                 style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.5px" }}
               >
-                Tattoo artwork
+                {t("sheet.tattooArtwork")}
               </p>
               <div
                 className="mt-2 flex items-center gap-3 rounded-[12px] border p-[10px]"
@@ -307,14 +316,14 @@ export default function Home() {
                   className="flex-1 truncate text-[14px] text-white/80"
                   style={{ fontFamily: "var(--font-gabarito)" }}
                 >
-                  Selected Image
+                  {t("sheet.selectedImage")}
                 </p>
                 <button
                   onClick={() => replaceRef.current?.openPicker()}
                   className="shrink-0 rounded-[8px] border px-3 py-2 text-[9px] uppercase text-white/70"
                   style={{ borderColor: "rgba(255,255,255,0.15)", fontFamily: "var(--font-dm-mono)", letterSpacing: "1.08px" }}
                 >
-                  Replace
+                  {t("sheet.replace")}
                 </button>
                 <UploadCard ref={replaceRef} variant="hidden" onImage={(img) => setImage(img)} />
               </div>
@@ -332,7 +341,7 @@ export default function Home() {
                 color: hasSelection ? "#16120a" : "#24210f",
               }}
             >
-              Save
+              {t("sheet.save")}
             </button>
           </div>
         </>

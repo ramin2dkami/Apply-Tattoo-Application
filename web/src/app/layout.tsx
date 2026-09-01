@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Gabarito, DM_Mono } from "next/font/google";
+import { LanguageProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const gabarito = Gabarito({ subsets: ["latin"], variable: "--font-gabarito" });
@@ -21,7 +22,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${gabarito.variable} ${dmMono.variable}`}>{children}</body>
+      <body className={`${gabarito.variable} ${dmMono.variable}`}>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

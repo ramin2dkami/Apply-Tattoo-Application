@@ -5,6 +5,7 @@ import { FigureSvg } from "./FigureSvg";
 import { prepareArtwork } from "@/lib/image";
 import { surfaceAt, unionViewBox, type Part, type Surfaceable, type ViewBox } from "@/lib/geometry";
 import { render, type Placement } from "@/lib/warp";
+import { useLanguage } from "@/lib/i18n";
 
 const MIN_CM = 1.5;
 const MAX_CM = 40;
@@ -47,6 +48,7 @@ export function PlaceCanvas({
       : parts.map((p) => ({ viewBox: p.viewBox, surface: p.surface }))),
     [real, parts],
   );
+  const { t } = useLanguage();
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [avail, setAvail] = useState({ w: 0, h: 0 });
@@ -385,14 +387,14 @@ export function PlaceCanvas({
 
         {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
           <div className="absolute bottom-2.5 left-2.5 z-10 overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-            <ZoomBtn onClick={resetView} label="Return to default view">⟲</ZoomBtn>
+            <ZoomBtn onClick={resetView} label={t("canvas.returnDefaultView")}>⟲</ZoomBtn>
           </div>
         )}
 
         <div className="absolute bottom-2.5 right-2.5 z-10 flex flex-col overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <ZoomBtn onClick={() => zoomBy(1.4)} label="Zoom in">+</ZoomBtn>
+          <ZoomBtn onClick={() => zoomBy(1.4)} label={t("canvas.zoomIn")}>+</ZoomBtn>
           <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
-          <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="Zoom out">−</ZoomBtn>
+          <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label={t("canvas.zoomOut")}>−</ZoomBtn>
         </div>
       </div>
 
@@ -401,7 +403,7 @@ export function PlaceCanvas({
         style={{ background: "#141617", borderColor: "rgba(255,255,255,0.1)" }}
       >
         <div className="text-[13px] font-bold text-white" style={{ fontFamily: "var(--font-gabarito)" }}>
-          Art size
+          {t("canvas.artSize")}
         </div>
 
         <div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -410,7 +412,7 @@ export function PlaceCanvas({
             style={{ background: "rgba(0,0,0,0.2)", borderColor: "rgba(245,196,70,0.35)" }}
           >
             <span className="text-[8px] uppercase text-white/40" style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "0.96px" }}>
-              Width
+              {t("canvas.width")}
             </span>
             <div className="mt-1 flex items-center gap-1">
               <span className="text-[16px] leading-6 text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>
@@ -424,7 +426,7 @@ export function PlaceCanvas({
             style={{ background: "rgba(0,0,0,0.2)", borderColor: "rgba(255,255,255,0.15)" }}
           >
             <span className="text-[8px] uppercase text-white/40" style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "0.96px" }}>
-              Height
+              {t("canvas.height")}
             </span>
             <div className="mt-1 flex items-center gap-1">
               <span className="text-[16px] leading-6 text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>
@@ -441,8 +443,8 @@ export function PlaceCanvas({
               borderColor: aspectLocked ? "rgba(245,196,70,0.5)" : "rgba(255,255,255,0.2)",
             }}
             aria-pressed={aspectLocked}
-            aria-label={aspectLocked ? "Aspect ratio locked" : "Aspect ratio unlocked"}
-            title={aspectLocked ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+            aria-label={aspectLocked ? t("canvas.aspectLocked") : t("canvas.aspectUnlocked")}
+            title={aspectLocked ? t("canvas.aspectLocked") : t("canvas.aspectUnlocked")}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={aspectLocked ? "#f5c446" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="5" y="11" width="14" height="9" rx="2" />
@@ -468,7 +470,7 @@ export function PlaceCanvas({
           />
         </div>
         <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <div className="text-[13px] text-white/85" style={{ fontFamily: "var(--font-gabarito)" }}>Contour to body</div>
+          <div className="text-[13px] text-white/85" style={{ fontFamily: "var(--font-gabarito)" }}>{t("canvas.contourToBody")}</div>
           <button
             onClick={() => setContour((c) => !c)}
             className="relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors"

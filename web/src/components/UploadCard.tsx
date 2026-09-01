@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export type UploadCardHandle = { openPicker: () => void };
 
@@ -8,6 +9,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
   onImage: (img: HTMLImageElement, name: string) => void;
   variant?: "card" | "dark" | "hidden";
 }>(function UploadCard({ onImage, variant = "card" }, ref) {
+  const { t } = useLanguage();
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [over, setOver] = useState(false);
@@ -17,13 +19,13 @@ export const UploadCard = forwardRef<UploadCardHandle, {
   function take(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("That doesn't look like an image. Try a PNG or JPG.");
+      setError(t("upload.errorNotImage"));
       return;
     }
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => { setError(null); onImage(img, file.name); };
-    img.onerror = () => setError("Couldn't read that file. Try another one.");
+    img.onerror = () => setError(t("upload.errorUnreadable"));
     img.src = url;
   }
 
@@ -54,14 +56,14 @@ export const UploadCard = forwardRef<UploadCardHandle, {
             className="text-[10px] uppercase text-[#16120a]"
             style={{ fontFamily: "var(--font-dm-mono)", fontWeight: 500, letterSpacing: "1.6px" }}
           >
-            Select image
+            {t("upload.selectImage")}
           </span>
         </button>
         <p
           className="mt-3 text-center text-[9px] text-white/30"
           style={{ fontFamily: "var(--font-dm-mono)" }}
         >
-          PNG, JPG, WEBP · up to 20 MB
+          {t("upload.fileHint")}
         </p>
         <input
           ref={input} type="file" accept="image/*" className="hidden"
@@ -93,9 +95,9 @@ export const UploadCard = forwardRef<UploadCardHandle, {
           </svg>
         </div>
         <div>
-          <div className="text-[15px] font-bold tracking-[-0.02em]">Upload your tattoo</div>
+          <div className="text-[15px] font-bold tracking-[-0.02em]">{t("upload.cardTitle")}</div>
           <div className="text-[12.5px] leading-snug text-[var(--muted)]">
-            PNG with a transparent background works best
+            {t("upload.cardHint")}
           </div>
         </div>
       </button>
