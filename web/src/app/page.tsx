@@ -44,6 +44,23 @@ export default function Home() {
     fetch(withBasePath("/figure/parts.json")).then((r) => r.json()).then(setData).catch(() => {});
   }, []);
 
+  // 100dvh is unreliable inside in-app browsers (WhatsApp, Instagram, etc.) — their
+  // WKWebView often reports a taller CSS viewport than what's actually visible above
+  // their own chrome, leaving dead space at the bottom. window.innerHeight tracks the
+  // real visible area, so mirror it into a custom property and prefer that.
+  useEffect(() => {
+    function setAppHeight() {
+      document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+    }
+    setAppHeight();
+    window.addEventListener("resize", setAppHeight);
+    window.addEventListener("orientationchange", setAppHeight);
+    return () => {
+      window.removeEventListener("resize", setAppHeight);
+      window.removeEventListener("orientationchange", setAppHeight);
+    };
+  }, []);
+
   const addedParts = (data?.parts ?? [])
     .filter((p) => added.includes(p.id));
   const front = addedParts.filter((p) => p.view === "front");
@@ -63,12 +80,22 @@ export default function Home() {
   }, [step, addedParts.length]);
 
   if (!data) {
-    return <div className="flex h-dvh items-center justify-center bg-[#0b0c0d] text-white/50">Loading…</div>;
+    return (
+      <div
+        className="flex items-center justify-center bg-[#0b0c0d] text-white/50"
+        style={{ height: "var(--app-height, 100dvh)" }}
+      >
+        Loading…
+      </div>
+    );
   }
 
   if (step === "upload") {
     return (
-      <div className="flex h-dvh w-full flex-col overflow-hidden bg-[#0b0c0d]">
+      <div
+        className="flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
+        style={{ height: "var(--app-height, 100dvh)" }}
+      >
         <Toast message="Image uploaded" show={toast} />
 
         <div
@@ -106,7 +133,10 @@ export default function Home() {
   // edit sheet is an overlay on top of them, so opening/closing it never reflows
   // (and never resizes) the illustration underneath. ----
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-[#0b0c0d]">
+    <div
+      className="relative flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
+      style={{ height: "var(--app-height, 100dvh)" }}
+    >
       <Toast message="Image uploaded" show={toast} />
 
       <div
