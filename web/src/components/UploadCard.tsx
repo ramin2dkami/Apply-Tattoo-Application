@@ -49,7 +49,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
       <div className="w-full" {...dropzoneProps}>
         <button
           onClick={() => input.current?.click()}
-          className="flex h-[39px] w-full items-center justify-center rounded-[12px] transition-opacity active:opacity-90"
+          className="flex h-10 w-full items-center justify-center rounded-[12px] transition-opacity active:opacity-90"
           style={{ background: over ? "#ffd469" : "#f5c446" }}
         >
           <span
@@ -60,7 +60,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
           </span>
         </button>
         <p
-          className="mt-3 text-center text-[9px] text-white/30"
+          className="mt-2 text-center text-[10px] leading-4 text-white/30"
           style={{ fontFamily: "var(--font-dm-mono)" }}
         >
           {t("upload.fileHint")}
@@ -69,7 +69,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
           ref={input} type="file" accept="image/*" className="hidden"
           onChange={(e) => take(e.target.files?.[0])}
         />
-        {error && <p className="mt-2 text-center text-[12px] font-semibold text-[#ff8a7a]">{error}</p>}
+        {error && <p className="mt-2 text-center text-[12px] leading-4 font-semibold text-[#ff8a7a]">{error}</p>}
       </div>
     );
   }
@@ -78,17 +78,17 @@ export const UploadCard = forwardRef<UploadCardHandle, {
     <div className="card p-4" {...dropzoneProps}>
       <button
         onClick={() => input.current?.click()}
-        className="flex w-full items-center gap-4 rounded-[18px] px-4 py-4 text-left transition-colors"
+        className="flex w-full items-center gap-4 rounded-[16px] px-4 py-4 text-left transition-colors"
         style={{
           border: `2px dashed ${over ? "var(--violet)" : "#ddd8ee"}`,
           background: over ? "var(--violet-lt)" : "#fbfaff",
         }}
       >
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px]"
           style={{ background: "var(--violet)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff"
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff"
                strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 17V5M6 11l6-6 6 6" />
             <path d="M4 19h16" />
@@ -96,7 +96,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
         </div>
         <div>
           <div className="text-[15px] font-bold tracking-[-0.02em]">{t("upload.cardTitle")}</div>
-          <div className="text-[12.5px] leading-snug text-[var(--muted)]">
+          <div className="text-[12px] leading-4 text-[var(--muted)]">
             {t("upload.cardHint")}
           </div>
         </div>
@@ -105,7 +105,7 @@ export const UploadCard = forwardRef<UploadCardHandle, {
         ref={input} type="file" accept="image/*" className="hidden"
         onChange={(e) => take(e.target.files?.[0])}
       />
-      {error && <p className="mt-2 px-1 text-[13px] font-semibold text-[#c0392b]">{error}</p>}
+      {error && <p className="mt-2 px-1 text-[13px] leading-4 font-semibold text-[#c0392b]">{error}</p>}
     </div>
   );
 });

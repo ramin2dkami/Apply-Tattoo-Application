@@ -17,6 +17,35 @@ Entry format:
 
 ---
 
+## 2026-09-01 — Landing screen fit, and the whole app on an 8pt grid
+
+**Shipped:** `specs/008`. Two changes.
+
+The landing screen no longer mis-renders on first load. `--app-height` is now set by
+an inline script in `<head>` instead of a `useEffect`, so the first painted frame is
+already the right height — before, the page painted at `100dvh` and then snapped once
+React hydrated, which on a GitHub Pages load is slow enough to see. It also reads
+`visualViewport.height` in preference to `innerHeight`, which is the only number that
+matches what's visible inside an in-app WebView or under iOS Safari's collapsing
+toolbar. The hero is now full-bleed to the top (the safe-area inset moved onto the
+language pill, killing the black strip above the artwork), it has a top scrim and a
+bottom fade instead of a hard seam, and the copy block has a `min-height` so a short
+viewport crops the image rather than pushing the Select image button off-screen.
+
+Every hand-written spacing and sizing value in `web/src` was then snapped to an 8pt
+grid, declared as `--s-*` / `--r-*` tokens in `globals.css`. Type sizes stay off the
+grid — type isn't spatial — but their line-heights are multiples of 4.
+
+**Learned:** `window.innerHeight` was the wrong half of the earlier in-app-browser fix.
+It reports the *large* viewport on iOS Safari, so content could still sit under the
+toolbar; `visualViewport.height` reports what's actually visible. Also: anything that
+sets a layout-critical CSS variable belongs in a pre-paint inline script, not an effect
+— on a static export served from a CDN, the hydration gap is visible.
+
+**Open:** The hero art is 474×639, so `object-cover` clips a badge at the edges on a
+tall phone. A wider source image, or one with more margin around the composition, would
+crop cleanly at every phone aspect ratio.
+
 ## 2026-08-31 — Fixed jagged contour warp on real-traced parts
 
 **Shipped:** Contour warp on the real-traced body parts (torso especially, but arm,

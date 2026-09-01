@@ -16,14 +16,14 @@ export function PartsPicker({
   const parts = [...data.parts].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 
   return (
-    <div className="grid grid-cols-2 gap-[6px]">
+    <div className="grid grid-cols-2 gap-2">
       {parts.map((p) => {
         const on = selected.includes(p.id);
         return (
           <button
             key={p.id}
             onClick={() => onToggle(p.id)}
-            className="flex h-[38px] items-center justify-start rounded-[12px] border px-[8px] py-[10px] text-left transition-colors"
+            className="flex h-10 items-center justify-start rounded-[12px] border px-3 text-left transition-colors"
             style={{
               background: on ? "rgba(245,196,70,0.12)" : "rgba(0,0,0,0.15)",
               borderColor: on ? "#f5c446" : "rgba(255,255,255,0.08)",

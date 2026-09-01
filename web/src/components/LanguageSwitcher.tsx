@@ -21,11 +21,11 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         letterSpacing: "1px",
         textTransform: "uppercase",
         fontFamily: "var(--font-dm-mono)",
-        padding: "7px 26px 7px 14px",
+        padding: "8px 32px 8px 16px",
         backgroundImage:
           "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff' stroke-opacity='0.7' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
+        backgroundPosition: "right 12px center",
       }}
     >
       {LOCALES.map((l) => (

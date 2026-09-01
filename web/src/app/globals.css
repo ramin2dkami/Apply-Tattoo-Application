@@ -13,6 +13,30 @@
   --line:      #e7e4f0;
   --body-fill: #ffffff;
   --body-line: #1a1a1a;
+
+  /* 8pt grid. Spacing, sizing and layout values come from this scale and nothing
+     else. --s-half (4px) is the only sub-8 step, for micro-spacing and radii;
+     type sizes are deliberately NOT on the grid, but their line-heights are. */
+  --s-half:  4px;
+  --s-1:     8px;
+  --s-2:    16px;
+  --s-3:    24px;
+  --s-4:    32px;
+  --s-5:    40px;
+  --s-6:    48px;
+  --s-7:    56px;
+  --s-8:    64px;
+
+  --r-sm:    8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   24px;
+  --r-2xl:  32px;
+  --r-full: 999px;
+
+  /* Set before first paint by the inline script in layout.tsx; the fallback only
+     applies if that script is blocked. */
+  --app-height: 100dvh;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
@@ -31,18 +55,18 @@ html, body {
 
 .card {
   background: var(--card);
-  border-radius: 28px;
+  border-radius: var(--r-xl);
   box-shadow: 0 2px 4px rgba(20,18,31,.04), 0 12px 32px rgba(20,18,31,.09);
 }
 .card-dark {
   background: var(--indigo);
   color: #fff;
-  border-radius: 28px;
+  border-radius: var(--r-xl);
 }
 
 .btn {
   display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 56px; border-radius: 999px;
+  width: 100%; height: var(--s-7); border-radius: var(--r-full);
   font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
   transition: transform .12s ease, opacity .12s ease;
 }
@@ -52,16 +76,16 @@ html, body {
 .btn-ghost { background: #f4f2fa; color: var(--ink); }
 
 .chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 13px; border-radius: 999px;
-  font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em;
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  padding: var(--s-1) var(--s-2); border-radius: var(--r-full);
+  font-size: 13px; font-weight: 650; letter-spacing: -0.01em;
   background: #f4f2fa; color: var(--muted);
 }
 .chip-on { background: var(--violet); color: #fff; }
 
-.seg { display: flex; background: #f0eef8; border-radius: 999px; padding: 3px; }
+.seg { display: flex; background: #f0eef8; border-radius: var(--r-full); padding: var(--s-half); }
 .seg button {
-  flex: 1; height: 34px; border-radius: 999px;
+  flex: 1; height: var(--s-4); border-radius: var(--r-full);
   font-size: 14px; font-weight: 700; color: var(--muted);
 }
 .seg button[data-on="true"] { background: #fff; color: var(--ink);
@@ -69,21 +93,21 @@ html, body {
 
 input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px; border-radius: 999px;
+  height: var(--s-1); border-radius: var(--r-full);
   background: linear-gradient(to right, var(--violet) var(--pct,50%), #ece9f6 var(--pct,50%));
 }
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 26px; height: 26px; border-radius: 999px;
-  background: #fff; border: 1px solid rgba(20,18,31,.10); margin-top: -9px;
+  -webkit-appearance: none; width: var(--s-3); height: var(--s-3); border-radius: var(--r-full);
+  background: #fff; border: 1px solid rgba(20,18,31,.10); margin-top: -8px;
   box-shadow: 0 2px 8px rgba(20,18,31,.22);
 }
 
 input[type="range"].range-gold::-webkit-slider-runnable-track {
-  height: 4px; border-radius: 999px;
+  height: var(--s-half); border-radius: var(--r-full);
   background: linear-gradient(to right, #f5c446 var(--pct,50%), #343638 var(--pct,50%));
 }
 input[type="range"].range-gold::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 999px;
+  -webkit-appearance: none; width: var(--s-2); height: var(--s-2); border-radius: var(--r-full);
   background: #f5c446; border: 2px solid #16120a; margin-top: -6px;
   box-shadow: 0 1px 4px rgba(0,0,0,.4);
 }

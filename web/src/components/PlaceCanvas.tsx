@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/i18n";
 
 const MIN_CM = 1.5;
 const MAX_CM = 40;
-const HANDLE = 13;
+const HANDLE = 16;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 
@@ -362,7 +362,7 @@ export function PlaceCanvas({
                 {(Object.keys(corners) as Corner[]).map((c) => (
                   <div
                     key={c}
-                    className="pointer-events-auto absolute touch-none rounded-[3px]"
+                    className="pointer-events-auto absolute touch-none rounded-[4px]"
                     style={{
                       width: HANDLE, height: HANDLE,
                       left: c.includes("l") ? -HANDLE / 2 : undefined,
@@ -386,12 +386,12 @@ export function PlaceCanvas({
         </div>
 
         {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
-          <div className="absolute bottom-2.5 left-2.5 z-10 overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="absolute bottom-2 left-2 z-10 overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
             <ZoomBtn onClick={resetView} label={t("canvas.returnDefaultView")}>⟲</ZoomBtn>
           </div>
         )}
 
-        <div className="absolute bottom-2.5 right-2.5 z-10 flex flex-col overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+        <div className="absolute bottom-2 right-2 z-10 flex flex-col overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <ZoomBtn onClick={() => zoomBy(1.4)} label={t("canvas.zoomIn")}>+</ZoomBtn>
           <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
           <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label={t("canvas.zoomOut")}>−</ZoomBtn>
@@ -402,7 +402,7 @@ export function PlaceCanvas({
         className="shrink-0 rounded-[16px] border p-4"
         style={{ background: "#141617", borderColor: "rgba(255,255,255,0.1)" }}
       >
-        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "var(--font-gabarito)" }}>
+        <div className="text-[13px] leading-5 font-bold text-white" style={{ fontFamily: "var(--font-gabarito)" }}>
           {t("canvas.artSize")}
         </div>
 
@@ -470,16 +470,16 @@ export function PlaceCanvas({
           />
         </div>
         <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-          <div className="text-[13px] text-white/85" style={{ fontFamily: "var(--font-gabarito)" }}>{t("canvas.contourToBody")}</div>
+          <div className="text-[13px] leading-5 text-white/85" style={{ fontFamily: "var(--font-gabarito)" }}>{t("canvas.contourToBody")}</div>
           <button
             onClick={() => setContour((c) => !c)}
-            className="relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors"
+            className="relative h-6 w-12 shrink-0 rounded-full transition-colors"
             style={{ background: contour ? "#f5c446" : "rgba(255,255,255,0.15)" }}
             aria-pressed={contour}
           >
             <span
-              className="absolute top-[3px] h-[20px] w-[20px] rounded-full"
-              style={{ left: contour ? 21 : 3, background: contour ? "#16120a" : "#fff", transition: "left .15s ease" }}
+              className="absolute top-1 h-4 w-4 rounded-full"
+              style={{ left: contour ? 28 : 4, background: contour ? "#16120a" : "#fff", transition: "left .15s ease" }}
             />
           </button>
         </div>
@@ -495,7 +495,7 @@ function ZoomBtn({
     <button
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center font-bold text-white/80"
+      className="flex h-10 w-10 items-center justify-center font-bold text-white/80"
       style={{ fontSize: small ? 15 : 19, background: "rgba(0,0,0,0.5)" }}
     >
       {children}
