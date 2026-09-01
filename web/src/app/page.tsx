@@ -72,27 +72,29 @@ export default function Home() {
         <Toast message="Image uploaded" show={toast} />
 
         <div
-          className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#111315] p-7"
+          className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111315]"
           style={{ marginTop: "max(20px, env(safe-area-inset-top))" }}
         >
-          <div className="flex w-full max-w-[260px] flex-col items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={withBasePath("/landing/hero.png")}
-              alt="Person reviewing tattoo ideas on their phone"
-              className="h-[208px] w-full rounded-2xl object-cover"
-            />
-            <h1
-              className="mt-6 text-center text-[24px] leading-8 text-white"
-              style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "-0.96px" }}
-            >
-              Upload your tattoo design
-            </h1>
-            <p className="mt-2 text-center text-[14px] leading-[22.75px] text-white/50">
-              Choose an image to unlock placement, scale, and contour tools.
-            </p>
-            <div className="mt-6 w-full">
-              <UploadCard variant="dark" onImage={(img) => handleImage(img)} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={withBasePath("/landing/hero.png")}
+            alt="Person reviewing tattoo ideas on their phone"
+            className="w-full flex-1 object-cover"
+          />
+          <div className="flex w-full flex-col items-center px-7 pb-7 pt-6">
+            <div className="w-full max-w-[260px]">
+              <h1
+                className="text-center text-[24px] leading-8 text-white"
+                style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "-0.96px" }}
+              >
+                Upload your tattoo design
+              </h1>
+              <p className="mt-2 text-center text-[14px] leading-[22.75px] text-white/50">
+                Choose an image to unlock placement, scale, and contour tools.
+              </p>
+              <div className="mt-6 w-full">
+                <UploadCard variant="dark" onImage={(img) => handleImage(img)} />
+              </div>
             </div>
           </div>
         </div>

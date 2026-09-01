@@ -174,6 +174,10 @@ export function PlaceCanvas({
   // from fighting over the same gesture.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragStart = useRef<{ x: number; y: number } | null>(null);
+  // A single-finger drag either moves the tattoo (press starts on it) or pans the
+  // view (press starts anywhere else on the body) — set once per drag, at pointerdown.
+  const dragMode = useRef<"tattoo" | "pan" | null>(null);
+  const tattooBox = useRef<HTMLDivElement>(null);
   const pinchStart = useRef<{
     dist: number; zoom: number; pan: { x: number; y: number };
     mid: { x: number; y: number };
@@ -187,6 +191,9 @@ export function PlaceCanvas({
     try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch {}
     if (pointers.current.size === 1) {
       dragStart.current = { x: e.clientX, y: e.clientY };
+      const r = tattooBox.current?.getBoundingClientRect();
+      const inside = !!r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      dragMode.current = inside ? "tattoo" : "pan";
     } else if (pointers.current.size === 2) {
       dragStart.current = null;
       const [a, b] = [...pointers.current.values()];
@@ -212,6 +219,13 @@ export function PlaceCanvas({
       });
       return;
     }
+    if (dragStart.current && dragMode.current === "pan") {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      dragStart.current = { x: e.clientX, y: e.clientY };
+      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+      return;
+    }
     if (dragStart.current) {
       const r = host.current!.querySelector(".stage")!.getBoundingClientRect();
       const dx = ((e.clientX - dragStart.current.x) / r.width) * vb[2];
@@ -227,7 +241,7 @@ export function PlaceCanvas({
   function surfaceUp(e: React.PointerEvent) {
     pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchStart.current = null;
-    if (pointers.current.size === 0) dragStart.current = null;
+    if (pointers.current.size === 0) { dragStart.current = null; dragMode.current = null; }
   }
 
   // ---- Figma-style corner handles ----
@@ -339,6 +353,7 @@ export function PlaceCanvas({
             />
             {box.w > 0 && (
               <div
+                ref={tattooBox}
                 className="pointer-events-none absolute"
                 style={{ left: corners.tl.x, top: corners.tl.y, width: wPx, height: hPx, border: "1.5px solid #f5c446" }}
               >
@@ -370,7 +385,7 @@ export function PlaceCanvas({
 
         {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
           <div className="absolute bottom-2.5 left-2.5 z-10 overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-            <ZoomBtn onClick={resetView} label="Reset zoom">⟲</ZoomBtn>
+            <ZoomBtn onClick={resetView} label="Return to default view">⟲</ZoomBtn>
           </div>
         )}
 
