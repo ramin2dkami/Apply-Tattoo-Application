@@ -6,6 +6,7 @@ import { PartsPicker } from "@/components/PartsPicker";
 import { PlaceCanvas } from "@/components/PlaceCanvas";
 import { Toast } from "@/components/Toast";
 import type { FigureData } from "@/lib/geometry";
+import { withBasePath } from "@/lib/basePath";
 
 type Step = "upload" | "workspace";
 
@@ -40,7 +41,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch("/figure/parts.json").then((r) => r.json()).then(setData).catch(() => {});
+    fetch(withBasePath("/figure/parts.json")).then((r) => r.json()).then(setData).catch(() => {});
   }, []);
 
   const addedParts = (data?.parts ?? [])
@@ -77,7 +78,7 @@ export default function Home() {
           <div className="flex w-full max-w-[260px] flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/landing/hero.png"
+              src={withBasePath("/landing/hero.png")}
               alt="Person reviewing tattoo ideas on their phone"
               className="h-[208px] w-full rounded-2xl object-cover"
             />

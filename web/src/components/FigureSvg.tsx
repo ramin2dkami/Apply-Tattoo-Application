@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ViewBox } from "@/lib/geometry";
+import { withBasePath } from "@/lib/basePath";
 
 const cache = new Map<string, string>();
 
@@ -15,7 +16,7 @@ export function useFigure(art: string) {
     const hit = cache.get(art);
     if (hit) { setInner(hit); return; }
     let alive = true;
-    fetch(`/figure/${art}`)
+    fetch(withBasePath(`/figure/${art}`))
       .then((r) => r.text())
       .then((t) => {
         const body = t.slice(t.indexOf(">") + 1, t.lastIndexOf("</svg>"));
