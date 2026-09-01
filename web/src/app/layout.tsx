@@ -19,24 +19,43 @@ export const viewport: Viewport = {
   themeColor: "#0b0c0d",
 };
 
-// Runs before first paint, so the very first frame is already the right height.
-// Doing this in a useEffect meant the landing screen painted at 100dvh and then
-// snapped once React hydrated — visible as a jump on a slow (GitHub Pages) load.
-// visualViewport.height is the only measurement that matches what is actually
-// visible inside an in-app WebView (Instagram, WhatsApp) or under iOS Safari's
-// collapsing toolbar; innerHeight is the fallback for browsers without it.
+// Sizing the app to the viewport inside an in-app browser (WhatsApp, Instagram)
+// has bitten us twice, in the same direction both times: the app ends up SHORTER
+// than the visible area, leaving a dead black band above the browser's toolbar.
+//
+// Both causes were measurement, not maths. `100dvh` under-reports in a WKWebView,
+// and so does `visualViewport.height` — it describes the visual viewport, which at
+// load time is not yet the settled layout viewport. `window.innerHeight` is the one
+// that matches what the user can actually see, but ONLY once the WebView has
+// finished resizing itself, which happens a beat after the first frame.
+//
+// So: measure early (so the first frame is close), then keep re-measuring through
+// every event and tick where a WebView is known to change its mind. `set` is cheap
+// and idempotent. The layout also carries a `min-height: 100%` floor, so even a
+// stale reading can't leave a gap.
 const APP_HEIGHT_SCRIPT = `
 (function () {
   var d = document.documentElement;
   function set() {
+    var h = window.innerHeight;
     var vv = window.visualViewport;
-    var h = vv && vv.height ? vv.height : window.innerHeight;
-    d.style.setProperty("--app-height", h + "px");
+    // Only ever let visualViewport make it taller, never shorter — a shorter
+    // reading is what produces the dead band.
+    if (vv && vv.height > h) h = vv.height;
+    if (h > 0) d.style.setProperty("--app-height", h + "px");
   }
   set();
-  addEventListener("resize", set);
-  addEventListener("orientationchange", set);
-  if (window.visualViewport) window.visualViewport.addEventListener("resize", set);
+  requestAnimationFrame(function () { set(); requestAnimationFrame(set); });
+  ["resize", "orientationchange", "pageshow", "load"].forEach(function (e) {
+    addEventListener(e, set);
+  });
+  document.addEventListener("DOMContentLoaded", set);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", set);
+    window.visualViewport.addEventListener("scroll", set);
+  }
+  // In-app browsers settle their chrome after the first paint and fire nothing.
+  [50, 150, 350, 700, 1500].forEach(function (t) { setTimeout(set, t); });
 })();
 `;
 

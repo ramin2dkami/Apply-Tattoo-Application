@@ -47,9 +47,9 @@ export default function Home() {
     fetch(withBasePath("/figure/parts.json")).then((r) => r.json()).then(setData).catch(() => {});
   }, []);
 
-  // --app-height is set before first paint by the inline script in layout.tsx, and
-  // kept in sync there — see the comment on APP_HEIGHT_SCRIPT for why 100dvh alone
-  // is wrong inside in-app browsers.
+  // Full-screen views use .app-shell (globals.css) for their height — see the
+  // comment on APP_HEIGHT_SCRIPT in layout.tsx for why measuring the viewport in an
+  // in-app browser needs both a live measurement and a 100% floor.
 
   const addedParts = (data?.parts ?? [])
     .filter((p) => added.includes(p.id));
@@ -72,8 +72,7 @@ export default function Home() {
   if (!data) {
     return (
       <div
-        className="flex items-center justify-center bg-[#0b0c0d] text-white/50"
-        style={{ height: "var(--app-height)" }}
+        className="app-shell flex items-center justify-center bg-[#0b0c0d] text-white/50"
       >
         Loading…
       </div>
@@ -83,13 +82,12 @@ export default function Home() {
   if (step === "upload") {
     return (
       <div
-        className="flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
-        style={{ height: "var(--app-height)" }}
+        className="app-shell flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
       >
         <Toast message={t("toast.imageUploaded")} show={toast} />
 
-        {/* The hero is full-bleed to the very top — the safe-area inset is carried by
-            the language pill instead, so there is no dead strip above the artwork. */}
+        {/* Full-bleed to the very top: no safe-area margin here, so there is no dead
+            strip above the artwork. Nothing is overlaid on it any more. */}
         <div className="relative min-h-0 flex-1 overflow-hidden bg-[#111315]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -98,23 +96,11 @@ export default function Home() {
             className="h-full w-full object-cover"
             style={{ objectPosition: "50% 32%" }}
           />
-          {/* Top scrim so the language pill reads over any part of the illustration,
-              bottom fade so the hero dissolves into the copy block instead of ending
-              on a hard seam. */}
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-24"
-            style={{ background: "linear-gradient(to bottom, rgba(11,12,13,0.75), rgba(11,12,13,0))" }}
-          />
+          {/* Fade the hero into the copy block instead of ending on a hard seam. */}
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
             style={{ background: "linear-gradient(to bottom, rgba(11,12,13,0), #0b0c0d)" }}
           />
-          <div
-            className="absolute right-4 z-10"
-            style={{ top: "max(16px, calc(env(safe-area-inset-top) + 8px))" }}
-          >
-            <LanguageSwitcher />
-          </div>
         </div>
 
         {/* min-height keeps the copy and the button whole on a short viewport (an
@@ -123,7 +109,7 @@ export default function Home() {
         <div
           className="flex w-full shrink-0 flex-col items-center px-6 pt-6"
           style={{
-            minHeight: 208,
+            minHeight: 264,
             paddingBottom: "max(24px, calc(env(safe-area-inset-bottom) + 16px))",
           }}
         >
@@ -140,6 +126,12 @@ export default function Home() {
             <div className="mt-6 w-full">
               <UploadCard variant="dark" onImage={(img) => handleImage(img)} />
             </div>
+            {/* The language control lives here, on the solid block, rather than
+                floating over the illustration — over the artwork it was hard to
+                pick out, and in an in-app browser it sits right under the URL bar. */}
+            <div className="mt-4 flex justify-center">
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       </div>
@@ -151,8 +143,7 @@ export default function Home() {
   // (and never resizes) the illustration underneath. ----
   return (
     <div
-      className="relative flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
-      style={{ height: "var(--app-height)" }}
+      className="app-shell relative flex w-full flex-col overflow-hidden bg-[#0b0c0d]"
     >
       <Toast message={t("toast.imageUploaded")} show={toast} />
 

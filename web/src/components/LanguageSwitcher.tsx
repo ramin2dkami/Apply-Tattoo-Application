@@ -13,9 +13,9 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       className={className}
       style={{
         appearance: "none",
-        background: "rgba(0,0,0,0.45)",
-        color: "rgba(255,255,255,0.85)",
-        border: "1px solid rgba(255,255,255,0.25)",
+        background: "rgba(255,255,255,0.06)",
+        color: "rgba(255,255,255,0.9)",
+        border: "1px solid rgba(255,255,255,0.3)",
         borderRadius: 999,
         fontSize: 11,
         letterSpacing: "1px",

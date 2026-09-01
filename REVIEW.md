@@ -17,6 +17,35 @@ Entry format:
 
 ---
 
+## 2026-09-01 — The in-app-browser dead band, properly this time
+
+**Shipped:** A second pass on the landing screen after it came back from WhatsApp's
+in-app browser still short — a black band above the browser toolbar.
+
+Two mistakes, now both fixed. First, preferring `visualViewport.height` over
+`window.innerHeight` was wrong: the visual viewport at load time is not the settled
+layout viewport, and it reads low, which is exactly what produces the band. It can now
+only ever raise the measurement, never lower it. Second, measuring once at parse time
+isn't enough — an in-app browser settles its chrome after the first frame and fires
+nothing about it — so the script re-measures across rAF, DOMContentLoaded/load/pageshow,
+the viewport events, and a ladder of timeouts.
+
+And because measurement in a WebView can't be trusted at all, the layout no longer
+depends on it alone: `.app-shell` is `height: var(--app-height); min-height: 100%` over
+a `height: 100%` html/body chain, so a stale reading can't leave a gap. Verified by
+forcing `--app-height` to 480px in a 640px viewport — the shell still measured 640.
+
+The language switcher moved off the artwork into the dark copy block. Floating
+top-right it was hard to see against the illustration, and in an in-app browser it sits
+directly under the URL bar.
+
+**Learned:** `100%` off a full-height html/body chain is the one viewport measurement
+that needs no JavaScript and can't go stale — worth having as a floor under any
+JS-measured height. Also: three different height APIs have now each been wrong in the
+same direction here. Treat any single one as a hint, not a fact.
+
+**Open:** Still unverified on Instagram's browser and on Android WebViews.
+
 ## 2026-09-01 — Landing screen fit, and the whole app on an 8pt grid
 
 **Shipped:** `specs/008`. Two changes.

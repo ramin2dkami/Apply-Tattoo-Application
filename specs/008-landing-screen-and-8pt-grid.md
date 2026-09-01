@@ -23,11 +23,25 @@ housekeeping that keeps every later screen consistent for free.
 
 ## How it works
 
-**Viewport height.** `--app-height` is now set by a tiny inline script in `<head>`
+**Viewport height.** `--app-height` is set by a tiny inline script in `<head>`
 (`layout.tsx`) so the first paint is already correct instead of using `100dvh` and then
-snapping when React hydrates. It prefers `visualViewport.height` (accurate inside
-in-app WebViews and under iOS Safari's collapsing toolbar) and falls back to
-`innerHeight`. It re-runs on `resize`, `orientationchange`, and `visualViewport.resize`.
+snapping when React hydrates. It measures `window.innerHeight` — the number that
+matches what the user can actually see in a WKWebView — and only ever lets
+`visualViewport.height` raise it, never lower it, because a low reading is what
+produces a dead band above the browser toolbar. Because an in-app browser settles its
+chrome a beat *after* the first frame and often fires no event about it, the script
+re-measures on two animation frames, on `DOMContentLoaded` / `load` / `pageshow` /
+`resize` / `orientationchange` / `visualViewport` events, and on a short ladder of
+timeouts.
+
+Measurement alone is not trusted: `.app-shell` (globals.css) is
+`height: var(--app-height); min-height: 100%` with `html, body { height: 100% }`, so a
+stale or under-reported measurement can never leave a gap — `100%` resolves against the
+real layout viewport and acts as the floor.
+
+**Language control.** It sits in the dark copy block under the file hint, not floating
+over the illustration. Over the artwork it was hard to pick out, and in an in-app
+browser it lands directly under the URL bar.
 
 **Landing layout.** The hero image is full-bleed to the very top — the safe-area inset
 is applied to the language pill instead of as a margin on the panel, so there is no
@@ -45,7 +59,8 @@ spatial), but line-heights are multiples of 4.
 
 - [x] No black strip at the top of the landing screen
 - [x] No layout jump between first paint and hydration
-- [x] Language pill clear of the illustration at 375×620 and 430×932
+- [x] Language control legible — moved off the artwork into the copy block
+- [x] No dead band above an in-app browser toolbar even if the measurement is stale
 - [x] The select-image button is fully visible at 375×620
 - [x] All spacing / sizing values are multiples of 8 (4 for micro-spacing and radii)
 - [x] Works on a phone browser

@@ -41,7 +41,17 @@
 
 * { -webkit-tap-highlight-color: transparent; }
 
+/* Every full-screen view uses this instead of a bare height, so a stale or
+   under-reported --app-height can never leave a dead band above an in-app
+   browser's toolbar: `100%` resolves against the real layout viewport (html and
+   body are height:100%) and acts as the floor. */
+.app-shell {
+  height: var(--app-height);
+  min-height: 100%;
+}
+
 html, body {
+  height: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
