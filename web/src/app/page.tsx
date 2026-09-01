@@ -79,7 +79,7 @@ export default function Home() {
           <img
             src={withBasePath("/landing/hero.png")}
             alt="Person reviewing tattoo ideas on their phone"
-            className="w-full flex-1 object-cover"
+            className="w-full min-h-0 flex-1 object-cover"
           />
           <div className="flex w-full flex-col items-center px-7 pb-7 pt-6">
             <div className="w-full max-w-[260px]">
