@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FigureSvg } from "./FigureSvg";
 import { prepareArtwork } from "@/lib/image";
-import { formatSize, surfaceAt, type Part, type Surfaceable, type ViewBox } from "@/lib/geometry";
+import { surfaceAt, unionViewBox, type Part, type Surfaceable, type ViewBox } from "@/lib/geometry";
 import { render, type Placement } from "@/lib/warp";
 
 const MIN_CM = 1.5;
@@ -16,34 +16,44 @@ type Corner = "tl" | "tr" | "bl" | "br";
 const OPPOSITE: Record<Corner, Corner> = { tl: "br", tr: "bl", bl: "tr", br: "tl" };
 
 export function PlaceCanvas({
-  part, image, onRemove, proceduralPxPerCm,
+  parts, image, onRemove, proceduralPxPerCm, figureArt, figureArtBack,
 }: {
-  part: Part;
+  parts: Part[];
   image: HTMLImageElement;
-  onRemove: () => void;
-  /** px/cm for the assembled-figure fallback (head, hips) — real art carries its own. */
+  onRemove: (id: string) => void;
+  /** px/cm for the assembled-figure fallback (head, hips, or any multi-part group) —
+   *  real art carries its own. */
   proceduralPxPerCm: number;
+  /** Assembled whole-figure art, used as the backdrop for a multi-part group. */
+  figureArt: string;
+  figureArtBack: string;
 }) {
-  /* A part with real art shows the actual reference drawing. Otherwise (head, hips —
-   * their traces came back broken, see assets/README.md) it falls back to the
-   * procedural one. Either way this card renders exactly one part, in that part's own
-   * coordinate space — no union with anything else. */
-  const real = part.real ?? null;
-  const art = real ? real.art : part.art;
+  /* A single part with real art shows the actual reference drawing, in that part's
+   * own coordinate space — the highest-fidelity case. Two or more parts (or a single
+   * part with no real art, e.g. head/hips whose traces came back broken, see
+   * assets/README.md) fall back to the procedural figure crop: every part's
+   * procedural geometry lives in the same shared coordinate space as the assembled
+   * front/back figure (see FigureSvg.tsx), so their union is a real window into that
+   * figure, not a fabricated composite. */
+  const single = parts.length === 1 ? parts[0] : null;
+  const real = single?.real ?? null;
+  const art = real ? real.art : single ? single.art : parts[0].view === "front" ? figureArt : figureArtBack;
   const mirror = real?.mirror ?? false;
   const pxPerCm = real ? real.pxPerCm : proceduralPxPerCm;
-  const vb: ViewBox = real ? real.viewBox : part.viewBox;
+  const vb: ViewBox = real ? real.viewBox : single ? single.viewBox : unionViewBox(parts);
   const surfaces: Surfaceable[] = useMemo(
-    () => (real ? [{ viewBox: real.viewBox, surface: { silhouette: real.silhouette } }]
-                : [{ viewBox: part.viewBox, surface: part.surface }]),
-    [real, part],
+    () => (real
+      ? [{ viewBox: real.viewBox, surface: { silhouette: real.silhouette } }]
+      : parts.map((p) => ({ viewBox: p.viewBox, surface: p.surface }))),
+    [real, parts],
   );
-
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [avail, setAvail] = useState({ w: 0, h: 0 });
-  const [unit, setUnit] = useState<"cm" | "in">("cm");
+  const [unit] = useState<"cm" | "in">("cm");
   const [contour, setContour] = useState(true);
+  const [aspectLocked, setAspectLocked] = useState(true);
+  const [heightCm, setHeightCm] = useState<number | null>(null);
 
   const src = useMemo(() => prepareArtwork(image), [image]);
 
@@ -55,6 +65,10 @@ export function PlaceCanvas({
     return { cx, cy, widthCm: clamp(acrossCm * 0.62, MIN_CM, MAX_CM) };
   });
 
+  // Aspect ratio is locked to the source image by default; heightCm holds an
+  // explicit override once the user unlocks it and drags a corner non-uniformly.
+  const hCm = heightCm ?? place.widthCm * (src.height / src.width);
+
   // ---- view zoom/pan, independent of the tattoo's own placement ----
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -62,6 +76,41 @@ export function PlaceCanvas({
     setZoom((z) => clamp(z * f, MIN_ZOOM, MAX_ZOOM));
   }
   function resetView() { setZoom(1); setPan({ x: 0, y: 0 }); }
+
+  // Trackpad pinch (and ctrl+scroll) arrives as a wheel event with ctrlKey set —
+  // that's the same signal Chrome/Firefox/Safari all synthesize for a trackpad pinch
+  // gesture, so this is the standard way to support it without native gesture events.
+  // React's delegated wheel listener is passive, so preventDefault() there is a no-op;
+  // a real DOM listener with { passive: false } is required to stop the page zooming.
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { panRef.current = pan; }, [pan]);
+
+  useEffect(() => {
+    const stageEl = host.current?.querySelector(".stage") as HTMLElement | null;
+    if (!stageEl) return;
+    function onWheel(e: WheelEvent) {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const r = host.current!.getBoundingClientRect();
+      const hx = r.left + r.width / 2;
+      const hy = r.top + r.height / 2;
+      const z0 = zoomRef.current;
+      const z1 = clamp(z0 * Math.exp(-e.deltaY * 0.01), MIN_ZOOM, MAX_ZOOM);
+      if (z1 === z0) return;
+      const p0 = panRef.current;
+      // Keep the point under the cursor fixed while the zoom changes, the same way
+      // the two-finger pinch handler keeps content anchored to the touch midpoint.
+      setPan({
+        x: (e.clientX - hx) * (1 - z1 / z0) + p0.x * (z1 / z0),
+        y: (e.clientY - hy) * (1 - z1 / z0) + p0.y * (z1 / z0),
+      });
+      setZoom(z1);
+    }
+    stageEl.addEventListener("wheel", onWheel, { passive: false });
+    return () => stageEl.removeEventListener("wheel", onWheel);
+  }, []);
 
   useEffect(() => {
     const el = host.current;
@@ -93,8 +142,8 @@ export function PlaceCanvas({
     if (!c || !scale) return;
     const ctx = c.getContext("2d");
     if (!ctx) return;
-    render({ ctx, src, placement: place, parts: surfaces, vb, scale, pxPerCm, contour });
-  }, [src, place, surfaces, vb, scale, pxPerCm, contour]);
+    render({ ctx, src, placement: { ...place, heightCm: hCm }, parts: surfaces, vb, scale, pxPerCm, contour });
+  }, [src, place, hCm, surfaces, vb, scale, pxPerCm, contour]);
 
   useEffect(() => {
     const c = canvas.current;
@@ -181,10 +230,9 @@ export function PlaceCanvas({
     if (pointers.current.size === 0) dragStart.current = null;
   }
 
-  // ---- Figma-style corner handles: aspect ratio always locked ----
-  const hCm = place.widthCm * (src.height / src.width);
+  // ---- Figma-style corner handles ----
   const resizing = useRef<{
-    corner: Corner; anchor: { x: number; y: number };
+    corner: Corner; anchor: { x: number; y: number }; sign: number[];
     startDist: number; startCx: number; startCy: number; startW: number;
   } | null>(null);
 
@@ -198,7 +246,7 @@ export function PlaceCanvas({
     const anchor = { x: place.cx - opp[0] * halfW, y: place.cy - opp[1] * halfH };
     const corner0 = { x: place.cx + sign[0] * halfW, y: place.cy + sign[1] * halfH };
     resizing.current = {
-      corner, anchor, startDist: Math.hypot(corner0.x - anchor.x, corner0.y - anchor.y),
+      corner, anchor, sign, startDist: Math.hypot(corner0.x - anchor.x, corner0.y - anchor.y),
       startCx: place.cx, startCy: place.cy, startW: place.widthCm,
     };
   }
@@ -206,17 +254,41 @@ export function PlaceCanvas({
     const st = resizing.current;
     if (!st) return;
     const p = toFig(e.clientX, e.clientY);
-    const dist = Math.hypot(p.x - st.anchor.x, p.y - st.anchor.y);
-    const s = st.startDist > 0 ? dist / st.startDist : 1;
-    const newW = clamp(st.startW * s, MIN_CM, MAX_CM);
-    const cs = newW / st.startW;
-    setPlace({
-      cx: st.anchor.x + (st.startCx - st.anchor.x) * cs,
-      cy: st.anchor.y + (st.startCy - st.anchor.y) * cs,
-      widthCm: newW,
-    });
+    if (aspectLocked) {
+      const dist = Math.hypot(p.x - st.anchor.x, p.y - st.anchor.y);
+      const s = st.startDist > 0 ? dist / st.startDist : 1;
+      const newW = clamp(st.startW * s, MIN_CM, MAX_CM);
+      const cs = newW / st.startW;
+      setPlace({
+        cx: st.anchor.x + (st.startCx - st.anchor.x) * cs,
+        cy: st.anchor.y + (st.startCy - st.anchor.y) * cs,
+        widthCm: newW,
+      });
+    } else {
+      const newW = clamp(Math.abs(p.x - st.anchor.x) / pxPerCm, MIN_CM, MAX_CM);
+      const newH = clamp(Math.abs(p.y - st.anchor.y) / pxPerCm, MIN_CM, MAX_CM);
+      setPlace({
+        cx: st.anchor.x + st.sign[0] * (newW * pxPerCm) / 2,
+        cy: st.anchor.y + st.sign[1] * (newH * pxPerCm) / 2,
+        widthCm: newW,
+      });
+      setHeightCm(newH);
+    }
   }
   function handleUp() { resizing.current = null; }
+
+  function toggleAspectLock() {
+    setAspectLocked((locked) => {
+      if (!locked) setHeightCm(null); // relock: snap back to the image's own aspect ratio
+      return !locked;
+    });
+  }
+
+  function sliderChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = Number(e.target.value);
+    const newW = clamp(unit === "cm" ? raw : raw * 2.54, MIN_CM, MAX_CM);
+    setPlace((p) => ({ ...p, widthCm: newW }));
+  }
 
   const cxPx = box.w ? ((place.cx - vb[0]) / vb[2]) * box.w : 0;
   const cyPx = box.h ? ((place.cy - vb[1]) / vb[3]) * box.h : 0;
@@ -229,125 +301,172 @@ export function PlaceCanvas({
     br: { x: cxPx + wPx / 2, y: cyPx + hPx / 2 },
   };
 
+  const toUnit = (cm: number) => (unit === "cm" ? cm : cm / 2.54);
+  const minU = toUnit(MIN_CM);
+  const maxU = toUnit(MAX_CM);
+  const pct = ((toUnit(place.widthCm) - minU) / (maxU - minU)) * 100;
+
   return (
-    <div className="card p-4">
-      <div className="mb-2.5 flex items-center justify-between">
-        <span className="text-[14px] font-extrabold tracking-[-0.02em]">{part.label}</span>
-        <button
-          onClick={onRemove}
-          className="flex h-7 w-7 items-center justify-center rounded-full"
-          style={{ background: "#f4f2fa" }}
-          aria-label={`Remove ${part.label}`}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6880"
-               strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
-      </div>
-
-      <div ref={host} className="relative h-[34vh] min-h-[240px] overflow-hidden rounded-2xl" style={{ background: "#fbfaff" }}>
-        <div
-          className="stage absolute left-1/2 top-1/2 touch-none select-none"
-          style={{
-            width: box.w || 1, height: box.h || 1,
-            transform: `translate(-50%,-50%) translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
-            transition: pinchStart.current ? "none" : "transform .12s ease-out",
-          }}
-          onPointerDown={surfaceDown}
-          onPointerMove={surfaceMove}
-          onPointerUp={surfaceUp}
-          onPointerCancel={surfaceUp}
-        >
-          <FigureSvg
-            art={art} mirror={mirror} viewBox={vb}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-          />
-          <canvas
-            ref={canvas}
-            className="pointer-events-none absolute inset-0"
-            style={{ width: "100%", height: "100%" }}
-          />
-          {box.w > 0 && (
-            <div
-              className="pointer-events-none absolute"
-              style={{ left: corners.tl.x, top: corners.tl.y, width: wPx, height: hPx, border: "1.5px solid var(--violet)" }}
-            >
-              {(Object.keys(corners) as Corner[]).map((c) => (
-                <div
-                  key={c}
-                  className="pointer-events-auto absolute touch-none rounded-[3px] bg-white"
-                  style={{
-                    width: HANDLE, height: HANDLE,
-                    left: c.includes("l") ? -HANDLE / 2 : undefined,
-                    right: c.includes("r") ? -HANDLE / 2 : undefined,
-                    top: c.includes("t") ? -HANDLE / 2 : undefined,
-                    bottom: c.includes("b") ? -HANDLE / 2 : undefined,
-                    border: "2px solid var(--violet)",
-                    boxShadow: "0 1px 3px rgba(20,18,31,.25)",
-                    cursor: c === "tl" || c === "br" ? "nwse-resize" : "nesw-resize",
-                  }}
-                  onPointerDown={(e) => handleDown(c, e)}
-                  onPointerMove={handleMove}
-                  onPointerUp={handleUp}
-                  onPointerCancel={handleUp}
-                />
-              ))}
-            </div>
-          )}
+    <div className="flex h-full flex-col gap-4 overflow-hidden">
+      <div
+        className="relative min-h-0 flex-[1_1_auto] overflow-hidden rounded-[32px] border"
+        style={{
+          background: "#111315", borderColor: "rgba(255,255,255,0.1)", boxShadow: "0px 30px 70px 0px rgba(0,0,0,0.34)",
+          "--body-fill": "#17191b", "--body-line": "rgba(255,255,255,0.22)",
+        } as React.CSSProperties}
+      >
+        <div ref={host} className="absolute inset-0">
+          <div
+            className="stage absolute left-1/2 top-1/2 touch-none select-none"
+            style={{
+              width: box.w || 1, height: box.h || 1,
+              transform: `translate(-50%,-50%) translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
+              transition: pinchStart.current ? "none" : "transform .12s ease-out",
+            }}
+            onPointerDown={surfaceDown}
+            onPointerMove={surfaceMove}
+            onPointerUp={surfaceUp}
+            onPointerCancel={surfaceUp}
+          >
+            <FigureSvg
+              art={art} mirror={mirror} viewBox={vb}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+            />
+            <canvas
+              ref={canvas}
+              className="pointer-events-none absolute inset-0"
+              style={{ width: "100%", height: "100%" }}
+            />
+            {box.w > 0 && (
+              <div
+                className="pointer-events-none absolute"
+                style={{ left: corners.tl.x, top: corners.tl.y, width: wPx, height: hPx, border: "1.5px solid #f5c446" }}
+              >
+                {(Object.keys(corners) as Corner[]).map((c) => (
+                  <div
+                    key={c}
+                    className="pointer-events-auto absolute touch-none rounded-[3px]"
+                    style={{
+                      width: HANDLE, height: HANDLE,
+                      left: c.includes("l") ? -HANDLE / 2 : undefined,
+                      right: c.includes("r") ? -HANDLE / 2 : undefined,
+                      top: c.includes("t") ? -HANDLE / 2 : undefined,
+                      bottom: c.includes("b") ? -HANDLE / 2 : undefined,
+                      background: "#f5c446",
+                      border: "2px solid #16120a",
+                      boxShadow: "0 1px 3px rgba(0,0,0,.4)",
+                      cursor: c === "tl" || c === "br" ? "nwse-resize" : "nesw-resize",
+                    }}
+                    onPointerDown={(e) => handleDown(c, e)}
+                    onPointerMove={handleMove}
+                    onPointerUp={handleUp}
+                    onPointerCancel={handleUp}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="absolute bottom-2.5 right-2.5 flex flex-col overflow-hidden rounded-xl" style={{ boxShadow: "0 2px 10px rgba(20,18,31,.16)" }}>
+        {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+          <div className="absolute bottom-2.5 left-2.5 z-10 overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+            <ZoomBtn onClick={resetView} label="Reset zoom">⟲</ZoomBtn>
+          </div>
+        )}
+
+        <div className="absolute bottom-2.5 right-2.5 z-10 flex flex-col overflow-hidden rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <ZoomBtn onClick={() => zoomBy(1.4)} label="Zoom in">+</ZoomBtn>
-          <div style={{ height: 1, background: "#eee9f7" }} />
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
           <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="Zoom out">−</ZoomBtn>
-          {zoom !== 1 && (
-            <>
-              <div style={{ height: 1, background: "#eee9f7" }} />
-              <ZoomBtn onClick={resetView} label="Reset zoom" small>⟲</ZoomBtn>
-            </>
-          )}
         </div>
       </div>
 
-      <div className="mt-4 flex items-end justify-between">
-        <div>
-          <div className="text-[12.5px] font-semibold text-[var(--muted)]">Actual size</div>
-          <div className="num mt-0.5" style={{ fontSize: 30 }}>
-            {unit === "cm" ? place.widthCm.toFixed(1) : (place.widthCm / 2.54).toFixed(1)}
-            <span className="ml-1 text-[16px] font-bold">{unit}</span>
-          </div>
-          <div className="mt-0.5 text-[12.5px] text-[var(--muted)]">
-            {formatSize(place.widthCm, hCm, unit)}
-          </div>
+      <div
+        className="shrink-0 rounded-[16px] border p-4"
+        style={{ background: "#141617", borderColor: "rgba(255,255,255,0.1)" }}
+      >
+        <div className="text-[13px] font-bold text-white" style={{ fontFamily: "var(--font-gabarito)" }}>
+          Art size
         </div>
-        <div className="seg w-[104px]">
-          {(["cm", "in"] as const).map((u) => (
-            <button key={u} data-on={unit === u} onClick={() => setUnit(u)}>{u}</button>
-          ))}
-        </div>
-      </div>
 
-      <div className="mt-3.5 flex items-center justify-between border-t pt-3.5" style={{ borderColor: "var(--line)" }}>
-        <div>
-          <div className="text-[13.5px] font-bold tracking-[-0.02em]">Contour to the body</div>
-          <div className="text-[12px] text-[var(--muted)]">Wrap it to the curve of the skin</div>
+        <div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
+          <div
+            className="flex flex-col justify-center rounded-[12px] border px-3 py-2"
+            style={{ background: "rgba(0,0,0,0.2)", borderColor: "rgba(245,196,70,0.35)" }}
+          >
+            <span className="text-[8px] uppercase text-white/40" style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "0.96px" }}>
+              Width
+            </span>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-[16px] leading-6 text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>
+                {toUnit(place.widthCm).toFixed(1)}
+              </span>
+              <span className="text-[10px] text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>{unit}</span>
+            </div>
+          </div>
+          <div
+            className="flex flex-col justify-center rounded-[12px] border px-3 py-2"
+            style={{ background: "rgba(0,0,0,0.2)", borderColor: "rgba(255,255,255,0.15)" }}
+          >
+            <span className="text-[8px] uppercase text-white/40" style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "0.96px" }}>
+              Height
+            </span>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-[16px] leading-6 text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>
+                {toUnit(hCm).toFixed(1)}
+              </span>
+              <span className="text-[10px] text-[#f5c446]" style={{ fontFamily: "var(--font-dm-mono)" }}>{unit}</span>
+            </div>
+          </div>
+          <button
+            onClick={toggleAspectLock}
+            className="flex flex-col items-center justify-center rounded-[12px] border px-2"
+            style={{
+              background: aspectLocked ? "rgba(245,196,70,0.1)" : "rgba(255,255,255,0.05)",
+              borderColor: aspectLocked ? "rgba(245,196,70,0.5)" : "rgba(255,255,255,0.2)",
+            }}
+            aria-pressed={aspectLocked}
+            aria-label={aspectLocked ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+            title={aspectLocked ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={aspectLocked ? "#f5c446" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2" />
+              {aspectLocked ? (
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              ) : (
+                <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+              )}
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={() => setContour((c) => !c)}
-          className="relative h-[28px] w-[47px] shrink-0 rounded-full transition-colors"
-          style={{ background: contour ? "var(--violet)" : "#ddd8ee" }}
-          aria-pressed={contour}
-        >
-          <span
-            className="absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white transition-all"
-            style={{ left: contour ? 22 : 3, boxShadow: "0 1px 4px rgba(0,0,0,.25)" }}
+
+        <div className="mt-4">
+          <input
+            type="range"
+            className="range-gold w-full"
+            min={minU}
+            max={maxU}
+            step={0.1}
+            value={toUnit(place.widthCm)}
+            onChange={sliderChange}
+            style={{ "--pct": `${pct}%` } as React.CSSProperties}
           />
-        </button>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="text-[13px] text-white/85" style={{ fontFamily: "var(--font-gabarito)" }}>Contour to body</div>
+          <button
+            onClick={() => setContour((c) => !c)}
+            className="relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors"
+            style={{ background: contour ? "#f5c446" : "rgba(255,255,255,0.15)" }}
+            aria-pressed={contour}
+          >
+            <span
+              className="absolute top-[3px] h-[20px] w-[20px] rounded-full"
+              style={{ left: contour ? 21 : 3, background: contour ? "#16120a" : "#fff", transition: "left .15s ease" }}
+            />
+          </button>
+        </div>
       </div>
-
-      <p className="mt-3 text-[12.5px] leading-snug text-[var(--muted)]">
-        One finger to move the tattoo, drag a corner to resize. Two fingers to zoom
-        and pan your view — it doesn&apos;t change the tattoo, just how closely you&apos;re looking.
-      </p>
     </div>
   );
 }
@@ -359,8 +478,8 @@ function ZoomBtn({
     <button
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center bg-white font-bold text-[var(--ink)]"
-      style={{ fontSize: small ? 15 : 19 }}
+      className="flex h-9 w-9 items-center justify-center font-bold text-white/80"
+      style={{ fontSize: small ? 15 : 19, background: "rgba(0,0,0,0.5)" }}
     >
       {children}
     </button>

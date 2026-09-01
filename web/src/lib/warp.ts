@@ -10,7 +10,7 @@
 
 import { surfaceAt, type Surfaceable, type ViewBox } from "./geometry";
 
-export type Placement = { cx: number; cy: number; widthCm: number };
+export type Placement = { cx: number; cy: number; widthCm: number; heightCm?: number };
 
 /** Ink never fades to nothing: on white, a tattoo that vanishes at the edge reads as
  *  a rendering bug rather than a surface turning away. */
@@ -35,7 +35,7 @@ export function render({
 
   const SW = src.width, SH = src.height;
   const wFig = placement.widthCm * pxPerCm;
-  const hFig = wFig * (SH / SW);
+  const hFig = placement.heightCm != null ? placement.heightCm * pxPerCm : wFig * (SH / SW);
 
   const cxC = (placement.cx - vb[0]) * scale;
   const cyC = (placement.cy - vb[1]) * scale;

@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "web"],
       "port": 3100
+    },
+    {
+      "name": "mobile-mockup",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "assets/tools", "-p", "4400", "-c-1"],
+      "port": 4400,
+      "url": "http://localhost:4400"
     }
   ]
 }

@@ -61,13 +61,29 @@ def envelope(pts, y0, y1, n=28):
         if -0.02 <= t <= 1.02:
             i = min(n, max(0, round(t * n)))
             buckets[i].append(x)
-    sil = []
-    for i, b in enumerate(buckets):
-        if not b:
-            continue
-        sil.append({"y": round(y0 + (y1 - y0) * i / n, 1),
-                    "left": round(min(b), 1), "right": round(max(b), 1)})
-    return sil
+    raw = [{"y": round(y0 + (y1 - y0) * i / n, 1), "left": min(b), "right": max(b)}
+           for i, b in enumerate(buckets) if b]
+
+    # The outline trace has occasional gaps at a given height -- a row where the pen
+    # stroke broke -- so min/max there locks onto an interior mark (a nipple, an ab
+    # line) instead of the true edge, producing a one-row inward dent that reads as a
+    # contour-warp glitch. Those bad rows aren't always lone spikes (two can fall two
+    # rows apart), which defeats a 3-point median -- the one good row between them
+    # looks like the outlier relative to its two bad neighbours. A 5-point median
+    # only needs 3 of 5 rows in each window to be good, which holds even when two
+    # bad rows are close together, while a real multi-row taper (neck, waist) still
+    # passes through unchanged.
+    def median5(vals):
+        out = []
+        for i in range(len(vals)):
+            window = vals[max(0, i - 2): i + 3]
+            out.append(sorted(window)[len(window) // 2])
+        return out
+
+    lefts = median5([p["left"] for p in raw])
+    rights = median5([p["right"] for p in raw])
+    return [{"y": p["y"], "left": round(l, 1), "right": round(r, 1)}
+            for p, l, r in zip(raw, lefts, rights)]
 
 
 def build():

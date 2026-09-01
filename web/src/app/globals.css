@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg:        #d3e2f7;
+  --bg:        #0b0c0d;
   --card:      #ffffff;
   --ink:       #14121f;
   --muted:     #6b6880;
@@ -76,6 +76,16 @@ input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; width: 26px; height: 26px; border-radius: 999px;
   background: #fff; border: 1px solid rgba(20,18,31,.10); margin-top: -9px;
   box-shadow: 0 2px 8px rgba(20,18,31,.22);
+}
+
+input[type="range"].range-gold::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 999px;
+  background: linear-gradient(to right, #f5c446 var(--pct,50%), #343638 var(--pct,50%));
+}
+input[type="range"].range-gold::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 999px;
+  background: #f5c446; border: 2px solid #16120a; margin-top: -6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
 }
 
 .figFill   { fill: var(--body-fill); stroke: var(--body-line); }

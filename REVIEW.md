@@ -17,6 +17,36 @@ Entry format:
 
 ---
 
+## 2026-08-31 — Fixed jagged contour warp on real-traced parts
+
+**Shipped:** Contour warp on the real-traced body parts (torso especially, but arm,
+back, and legs too) no longer renders a jagged zigzag edge. Reported via a screenshot
+of a tattoo on the front torso whose warped edge looked like a mangled second body
+outline instead of a smooth wrap.
+
+**Learned:** Not a warp-algorithm bug — a data bug. `trace_geometry.py`'s `envelope()`
+takes min/max-x per height bucket from the raw ink point cloud in the traced SVGs. At
+a handful of rows the outline stroke has a gap, so min/max locks onto an interior mark
+(a nipple, an ab line) instead of the true edge, producing a single-row inward dent in
+the silhouette. `warp.ts` resolves the wrap radius per row (by design, so art can cross
+a joint), so one bad row swings the radius wildly and shows up as a visible jag. A
+plain 3-point median filter wasn't enough — two bad rows two apart sandwich a good row
+that then looks like the outlier. A 5-point median (needs only 3 of 5 rows right)
+fixed it cleanly; verified by re-deriving `assets/figure/real/manifest.json` and
+diffing before/after silhouette points for max row-to-row jump.
+
+**Changed:** `assets/tools/trace_geometry.py`'s `envelope()` now median-filters the
+silhouette before returning it. Regenerated `assets/figure/combined.json` and synced
+`web/public/figure/parts.json` + `web/public/figure/real/*.svg` per the rebuild steps
+in `assets/README.md`.
+
+**Open:** The very first row of `leg-shape-r` still has a real (harmless) 81px jump —
+a single-point sliver at the hip crop where `warp.ts` already skips it (`R <= 1`). Not
+worth special-casing. If more real-art parts get traced later, this smoothing pass
+should catch the same class of gap automatically.
+
+---
+
 ## 2026-08-29 — Mobile-first: bottom sheet, per-part cards, pinch-zoom
 
 **Shipped:** Rebuilt the interaction model around mobile gestures.

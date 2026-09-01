@@ -21,10 +21,11 @@ the product.
 - [x] **Tattoo upload.** Drag/drop or file picker. PNG with transparency is the happy
       path; JPG gets a background-removal nudge, not a blocker.
       Spec: `specs/002-tattoo-upload.md`
-- [~] **Place, size, rotate.** Mobile-first now: bottom sheet to add parts, each
-      part its own card, Figma-style corner handles, two-finger pinch to zoom/pan
-      the view independent of the tattoo's own size. Drag to move, pinch/handles to resize, rotate, adjust
-      opacity. Must feel good on a touchscreen — this is the whole app.
+- [~] **Place, size, rotate.** Mobile-first now: bottom sheet to add parts, same-view
+      parts merge into one card (D10) so several parts share one placement, Figma-style
+      corner handles, two-finger pinch to zoom/pan the view independent of the tattoo's
+      own size. Drag to move, pinch/handles to resize, rotate, adjust opacity. Must
+      feel good on a touchscreen — this is the whole app.
       Spec: `specs/003-place-size-rotate.md`
 - [x] **Real-world size readout.** Live "4.5 in × 3.1 in" derived from the body
       part's reference dimension. Toggle cm/inches.
@@ -46,7 +47,10 @@ front of at least three artists.
 - [ ] Elliptical cross-sections for forearm and calf
 - [ ] Notes field on the share page ("I want it here, this size, black and grey")
 - [ ] Multiple separate tattoos placed in one session
-- [ ] Spanning across chains (shoulder into arm), which needs a junction model
+- [ ] Spanning across chains with real-art fidelity preserved (D10 already merges
+      same-view parts into one procedural card; the remaining gap is a junction model
+      accurate enough to keep real traced art when a design crosses, say, shoulder
+      into arm, instead of falling back to line art)
 - [ ] Artist-branded intake link (their name on the page)
 - [ ] Copy-to-clipboard / native share sheet on mobile
 

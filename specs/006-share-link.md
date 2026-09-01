@@ -17,8 +17,9 @@ through a customer who already wanted to use it.
 
 ## How it works
 
-On share, persist the placement — body part id, tattoo image, transform, size, unit —
-and a pre-rendered composite PNG. Return a short URL.
+On share, persist each card's placement — its body part id(s) (a card may hold more
+than one part merged into one view, per D10), tattoo image, transform, size, unit —
+and a pre-rendered composite PNG per card. Return a short URL.
 
 The share page is read-only and legible in ten seconds:
 

@@ -1,80 +1,309 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { UploadCard } from "@/components/UploadCard";
+import { useEffect, useRef, useState } from "react";
+import { UploadCard, type UploadCardHandle } from "@/components/UploadCard";
 import { PartsPicker } from "@/components/PartsPicker";
 import { PlaceCanvas } from "@/components/PlaceCanvas";
-import { BottomSheet } from "@/components/BottomSheet";
+import { Toast } from "@/components/Toast";
 import type { FigureData } from "@/lib/geometry";
+
+type Step = "upload" | "workspace";
 
 export default function Home() {
   const [data, setData] = useState<FigureData | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [added, setAdded] = useState<string[]>([]);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [step, setStep] = useState<Step>("upload");
+  const [editOpen, setEditOpen] = useState(true);
+  const [activeGroup, setActiveGroup] = useState(0);
+  const [toast, setToast] = useState(false);
+  const replaceRef = useRef<UploadCardHandle>(null);
+
+  function handleImage(img: HTMLImageElement) {
+    setImage(img);
+    setStep("workspace");
+    setEditOpen(true);
+    setToast(true);
+    setTimeout(() => setToast(false), 2600);
+  }
+
+  async function handleShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "My tattoo placement", url: location.href });
+        return;
+      } catch {
+        return;
+      }
+    }
+    await navigator.clipboard.writeText(location.href);
+  }
 
   useEffect(() => {
     fetch("/figure/parts.json").then((r) => r.json()).then(setData).catch(() => {});
   }, []);
 
+  const addedParts = (data?.parts ?? [])
+    .filter((p) => added.includes(p.id));
+  const front = addedParts.filter((p) => p.view === "front");
+  const back = addedParts.filter((p) => p.view === "back");
+  const groups = [front, back].filter((g) => g.length > 0);
+  const hasSelection = added.length > 0;
+  const hasPlacement = !!image && groups.length > 0;
+
+  useEffect(() => {
+    if (activeGroup >= groups.length) setActiveGroup(0);
+  }, [groups.length, activeGroup]);
+
+  // Nothing left to place (e.g. the last part was removed from the canvas) — the
+  // edit sheet is the only place that makes sense, so force it back open.
+  useEffect(() => {
+    if (step === "workspace" && addedParts.length === 0) setEditOpen(true);
+  }, [step, addedParts.length]);
+
   if (!data) {
-    return <div className="flex min-h-dvh items-center justify-center text-[var(--muted)]">Loading…</div>;
+    return <div className="flex h-dvh items-center justify-center bg-[#0b0c0d] text-white/50">Loading…</div>;
   }
 
-  const addedParts = data.parts.filter((p) => added.includes(p.id));
+  if (step === "upload") {
+    return (
+      <div className="flex h-dvh w-full flex-col overflow-hidden bg-[#0b0c0d]">
+        <Toast message="Image uploaded" show={toast} />
 
+        <div
+          className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#111315] p-7"
+          style={{ marginTop: "max(20px, env(safe-area-inset-top))" }}
+        >
+          <div className="flex w-full max-w-[260px] flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/hero.png"
+              alt="Person reviewing tattoo ideas on their phone"
+              className="h-[208px] w-full rounded-2xl object-cover"
+            />
+            <h1
+              className="mt-6 text-center text-[24px] leading-8 text-white"
+              style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "-0.96px" }}
+            >
+              Upload your tattoo design
+            </h1>
+            <p className="mt-2 text-center text-[14px] leading-[22.75px] text-white/50">
+              Choose an image to unlock placement, scale, and contour tools.
+            </p>
+            <div className="mt-6 w-full">
+              <UploadCard variant="dark" onImage={(img) => handleImage(img)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- workspace: canvas + bottom bar always occupy the same fixed layout — the
+  // edit sheet is an overlay on top of them, so opening/closing it never reflows
+  // (and never resizes) the illustration underneath. ----
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-5 pb-10 pt-12">
-      <div>
-        <h1 className="h1">Show your artist exactly what you want</h1>
-        <p className="mt-2 text-[15px] leading-snug text-[var(--muted)]">
-          Upload your design, put it where you want it, and get the real size — so
-          they can quote you without twenty messages.
-        </p>
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-[#0b0c0d]">
+      <Toast message="Image uploaded" show={toast} />
+
+      <div
+        className="relative min-h-0 flex-1 overflow-hidden px-4 pb-4"
+        style={{ marginTop: "max(20px, env(safe-area-inset-top))" }}
+      >
+        {hasPlacement ? (
+          <PlaceCanvas
+            key={groups[activeGroup].map((p) => p.id).join("+")}
+            parts={groups[activeGroup]}
+            image={image!}
+            proceduralPxPerCm={data.figure.pxPerCm}
+            figureArt={data.figure.art}
+            figureArtBack={data.figure.artBack}
+            onRemove={(id) => setAdded((s) => s.filter((x) => x !== id))}
+          />
+        ) : (
+          <div
+            className="flex h-full flex-col items-center overflow-hidden rounded-[32px] border p-7"
+            style={{
+              background: "#111315",
+              borderColor: "rgba(255,255,255,0.1)",
+              boxShadow: "0px 30px 70px 0px rgba(0,0,0,0.34)",
+              justifyContent: editOpen ? "flex-start" : "center",
+              paddingTop: editOpen ? "max(20px, env(safe-area-inset-top))" : "28px",
+            }}
+          >
+            <div className="flex w-full max-w-[250px] flex-col items-center">
+              <p
+                className="text-center text-[9px] uppercase text-[#f5c446]"
+                style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.8px" }}
+              >
+                Artwork Ready
+              </p>
+              <p
+                className="mt-3 text-center text-[14px] leading-[22.75px] text-white/55"
+                style={{ fontFamily: "var(--font-gabarito)" }}
+              >
+                Select a body region to place image and then click save.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {groups.length > 1 && (
+          <div
+            className="absolute right-7 top-7 z-10 flex rounded-full border p-[3px]"
+            style={{ background: "rgba(0,0,0,0.35)", borderColor: "rgba(255,255,255,0.15)" }}
+          >
+            {groups.map((g, i) => (
+              <button
+                key={g[0].view}
+                onClick={() => setActiveGroup(i)}
+                className="rounded-full px-3 py-1 text-[11px] uppercase transition-colors"
+                style={{
+                  fontFamily: "var(--font-dm-mono)",
+                  letterSpacing: "1px",
+                  background: activeGroup === i ? "#f5c446" : "transparent",
+                  color: activeGroup === i ? "#16120a" : "rgba(255,255,255,0.5)",
+                }}
+              >
+                {g[0].view === "front" ? "Front" : "Back"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <UploadCard image={image} onImage={(img) => setImage(img)} />
-
-      {image && (
-        <>
-          {addedParts.map((p) => (
-            <PlaceCanvas
-              key={p.id}
-              part={p}
-              image={image}
-              proceduralPxPerCm={data.figure.pxPerCm}
-              onRemove={() => setAdded((s) => s.filter((x) => x !== p.id))}
-            />
-          ))}
-
+      <div
+        className="shrink-0 border-t px-4 py-3"
+        style={{
+          background: "rgba(11,12,13,0.95)",
+          backdropFilter: "blur(12px)",
+          borderColor: "rgba(255,255,255,0.1)",
+          paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+        }}
+      >
+        <div className="flex gap-2">
           <button
-            onClick={() => setSheetOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-[18px] border-2 border-dashed py-4 text-[15px] font-bold tracking-[-0.01em] text-[var(--violet)] transition-colors active:bg-[var(--violet-lt)]"
-            style={{ borderColor: "#c9bdf2" }}
+            onClick={() => setEditOpen(true)}
+            className="h-[41px] flex-[182] rounded-[12px] border text-[10px] uppercase"
+            style={{
+              borderColor: "rgba(255,255,255,0.2)",
+              color: "rgba(255,255,255,0.75)",
+              fontFamily: "var(--font-dm-mono)",
+              fontWeight: 500,
+              letterSpacing: "1.6px",
+            }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-            {addedParts.length === 0 ? "Add a body part" : "Add another body part"}
+            Edit
           </button>
+          <button
+            onClick={handleShare}
+            className="h-[41px] flex-[180] rounded-[12px] text-[10px] uppercase"
+            style={{
+              background: "#f5c446",
+              color: "#16120a",
+              fontFamily: "var(--font-dm-mono)",
+              fontWeight: 500,
+              letterSpacing: "1.6px",
+            }}
+          >
+            Share
+          </button>
+        </div>
+      </div>
+
+      {editOpen && (
+        <>
+          <div
+            className="absolute inset-0 z-20"
+            onClick={() => hasSelection && setEditOpen(false)}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 z-30 max-h-[85%] overflow-y-auto rounded-t-[32px] border-t px-5 pt-5"
+            style={{
+              background: "#141617",
+              borderColor: "rgba(255,255,255,0.1)",
+              boxShadow: "0px -25px 70px 0px rgba(0,0,0,0.45)",
+              paddingBottom: "max(20px, env(safe-area-inset-bottom))",
+            }}
+          >
+            <div className="flex justify-center">
+              <div className="h-1 w-10 rounded-full bg-white/20" />
+            </div>
+
+            <h2
+              className="pt-5 text-[18px] leading-7 text-[#f4f1e9]"
+              style={{ fontFamily: "var(--font-gabarito)", letterSpacing: "0.45px" }}
+            >
+              Edit
+            </h2>
+
+            <div className="pt-5">
+              <p
+                className="text-[10px] uppercase text-white/45"
+                style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.5px" }}
+              >
+                Body region
+              </p>
+              <div className="pt-2">
+                <PartsPicker
+                  data={data}
+                  selected={added}
+                  onToggle={(id) => setAdded((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))}
+                />
+              </div>
+            </div>
+
+            <div className="py-5">
+              <p
+                className="text-[10px] uppercase text-white/45"
+                style={{ fontFamily: "var(--font-dm-mono)", letterSpacing: "1.5px" }}
+              >
+                Tattoo artwork
+              </p>
+              <div
+                className="mt-2 flex items-center gap-3 rounded-[12px] border p-[10px]"
+                style={{ background: "rgba(0,0,0,0.2)", borderColor: "rgba(255,255,255,0.1)" }}
+              >
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-black/30">
+                  {image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image.src} alt="" className="h-full w-full object-contain" />
+                  )}
+                </div>
+                <p
+                  className="flex-1 truncate text-[14px] text-white/80"
+                  style={{ fontFamily: "var(--font-gabarito)" }}
+                >
+                  Selected Image
+                </p>
+                <button
+                  onClick={() => replaceRef.current?.openPicker()}
+                  className="shrink-0 rounded-[8px] border px-3 py-2 text-[9px] uppercase text-white/70"
+                  style={{ borderColor: "rgba(255,255,255,0.15)", fontFamily: "var(--font-dm-mono)", letterSpacing: "1.08px" }}
+                >
+                  Replace
+                </button>
+                <UploadCard ref={replaceRef} variant="hidden" onImage={(img) => setImage(img)} />
+              </div>
+            </div>
+
+            <button
+              disabled={!hasSelection}
+              onClick={() => setEditOpen(false)}
+              className="h-[39px] w-full rounded-[12px] text-[10px] uppercase transition-opacity"
+              style={{
+                fontFamily: "var(--font-dm-mono)",
+                fontWeight: 500,
+                letterSpacing: "1.6px",
+                background: hasSelection ? "#f5c446" : "#5e5736",
+                color: hasSelection ? "#16120a" : "#24210f",
+              }}
+            >
+              Save
+            </button>
+          </div>
         </>
       )}
-
-      <BottomSheet
-        open={sheetOpen}
-        title="Where do you want it?"
-        onClose={() => setSheetOpen(false)}
-        footer={
-          <button className="btn btn-primary" onClick={() => setSheetOpen(false)}>
-            {added.length === 0 ? "Done" : `Done — ${added.length} ${added.length > 1 ? "parts" : "part"} added`}
-          </button>
-        }
-      >
-        <PartsPicker
-          data={data}
-          selected={added}
-          onToggle={(id) => setAdded((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))}
-        />
-      </BottomSheet>
     </div>
   );
 }

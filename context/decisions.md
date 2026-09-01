@@ -169,3 +169,34 @@ tap to remove.
 **Reverse if:** customers meaningfully ask to preview one continuous design across two
 unrelated parts (shoulder blade onto the back of the arm, say). That would need a
 resurrected shared-coordinate-space mode, kept as an option rather than the default.
+
+---
+
+### D10 — Same-view parts merge into one card, one placement (2026-08-28)
+
+**Decision:** Reverses D9's default. Selected parts are grouped by view (front/back)
+before rendering: each group of one or more same-view parts becomes a single
+placement card with one shared tattoo position, size, and contour toggle — not one
+card per part. A front-view group and a back-view group still render as (at most) two
+separate cards, since they are genuinely different drawings.
+
+**Why:** This is exactly the condition D9 named for its own reversal. It didn't need
+new geometry to build: D8 already generates every part's procedural artwork and the
+assembled `front.svg`/`back.svg` from one shared profile, so a part's `viewBox` is
+already a window into the same coordinate space as the whole figure. D6's
+merged-silhouette mechanism (`unionViewBox`, `surfaceAt` picking the nearest surface
+across an array of parts) and the warp (`warp.ts`'s `render()`, already `parts:
+Surfaceable[]`) were retired from the UI by D9 but never actually removed — this
+change rewires them, it doesn't rebuild them.
+
+The one real constraint this surfaces: real per-part traced art (`part.real`, used
+for best fidelity when a single part is selected) lives in its own independent
+coordinate space per part and cannot be composited. So a solo part keeps showing real
+art as before; the moment a second part joins its group, the group falls back to the
+procedural figure crop for both. This is a visible fidelity trade a customer makes by
+selecting more than one part in the same view — noted here so it isn't mistaken for a
+bug later.
+
+**Reverse if:** the procedural fallback's line-art quality reads as a downgrade badly
+enough, once real art exists for more parts, that customers avoid combining parts to
+keep the nicer single-part drawing.

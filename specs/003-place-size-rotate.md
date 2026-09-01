@@ -19,6 +19,14 @@ Canvas with two layers: the figure underneath, cropped to the selected region or
 union of a spanning selection, and the tattoo above. A span is one canvas in one
 coordinate space — never two canvases stitched together.
 
+Selected parts are grouped by view (front/back) before rendering: each group gets its
+own card. A solo part in a group shows its real traced artwork; the moment a second
+part joins that group, the card falls back to a procedural crop of the assembled
+figure, since only the procedural artwork shares one coordinate space across parts
+(see `context/decisions.md` D10). Placement, size, and the contour toggle are shared
+per card, not per part — one tattoo applied once across however many parts are in
+that group.
+
 Gestures on touch:
 
 - One finger drag — move
