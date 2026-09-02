@@ -15,6 +15,9 @@ the product.
 - [x] **Body part picker.** Tap a part on the figure: head, neck & torso, back, hips,
       left/right arm, left/right leg. Multi-select, so a piece can span a joint.
       Spec: `specs/001-body-part-picker.md`
+- [x] **Male or female body.** Picked in the Edit sheet, above the regions. Both
+      figures come out of one generator, so scale stays exact on either.
+      Spec: `specs/009-body-type.md`
 - [ ] **Rotate the part.** Maths proven, not yet wired into the app. Drag to spin a limb through 360&deg; and place the tattoo on
       any side. Head, torso and hips step between front and back views.
       Spec: `specs/007-rotate-part.md`
@@ -37,6 +40,10 @@ the product.
 - [ ] **Shareable link.** "Send to my artist" produces a URL showing the composite
       image, the body part, the placement, and the size. No login for either side.
       Spec: `specs/006-share-link.md`
+- [~] **Responsive desktop layout.** Same app, same components; above 1024px the edit
+      sheet becomes a persistent side panel and the canvas gets real room instead of
+      staying capped at phone width. Mobile is untouched below the breakpoint.
+      Spec: `specs/010-responsive-desktop-layout.md`
 
 ## Next — after real people have used it
 
@@ -73,4 +80,6 @@ Naming these keeps them from creeping in:
 - No AI generation of tattoo art
 - No artist marketplace or discovery
 - No payments
-- No desktop-first design — phone is the primary device
+- No desktop-first design — phone stays the primary device (superseded in part by
+  `specs/010-responsive-desktop-layout.md`: desktop must no longer look broken, but
+  nothing is designed desktop-first)

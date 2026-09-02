@@ -200,3 +200,22 @@ bug later.
 **Reverse if:** the procedural fallback's line-art quality reads as a downgrade badly
 enough, once real art exists for more parts, that customers avoid combining parts to
 keep the nicer single-part drawing.
+
+---
+
+### D11 — Desktop gets a responsive layout, not a separate design (2026-09-01)
+
+**Decision:** Partially reverses the "no desktop-first design" non-goal. The phone
+experience stays primary and untouched; above 1024px the same app adapts — edit
+controls become a persistent side panel instead of a bottom sheet, canvas gets more
+room instead of staying phone-width. One component tree, `lg:` breakpoint variants,
+no separate desktop route.
+
+**Why:** Artists and customers open the link on whatever's in front of them, and a
+phone layout stretched onto a laptop or desktop screen reads as unfinished rather
+than "mobile-first." Fixing that doesn't require a second design — `PlaceCanvas`
+already sizes off its host, so the fix is layout, not new product work.
+Spec: `specs/010-responsive-desktop-layout.md`.
+
+**Reverse if:** desktop usage turns out to be negligible and the added layout branches
+aren't worth maintaining.

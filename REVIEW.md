@@ -17,6 +17,99 @@ Entry format:
 
 ---
 
+## 2026-09-01 — Responsive desktop layout
+
+**Shipped:** Same app, same components, one new `lg:` (1024px) breakpoint
+(specs/010). Below it, nothing changed — verified pixel-for-pixel against the iPhone
+mockup. At and above it: the edit sheet's controls (body type, body region, tattoo
+artwork) now render once, in a new shared `EditPanel` component, inside a persistent
+left side panel instead of a bottom-sheet overlay — no backdrop, no open/close state,
+the canvas already reflects every change live. The canvas column is capped at a max
+width and centered instead of stretching full-bleed on a wide monitor. The landing
+screen becomes a centered two-column composition (hero image beside the copy/upload
+block) instead of a stacked phone frame. Share moved to a small top-corner button on
+desktop since there's nothing left to "Edit" toward.
+
+**Learned:** `PlaceCanvas` needed zero changes — it already sizes itself off its host
+via `ResizeObserver`, so a wider or differently-shaped container was enough. The real
+work was entirely in `page.tsx`'s layout, not the canvas/gesture code.
+
+**Changed:** Reverses part of the "no desktop-first design" non-goal in `ROADMAP.md`
+— see decision D11 in `context/decisions.md`. Desktop no longer looks broken, but
+nothing is designed desktop-first; mobile stays the primary device.
+
+**Open:** Not tested against a real artist on a real desktop browser yet — only
+verified in the in-app browser preview at 1440×900 and the iPhone mockup at 375×812.
+
+---
+
+## 2026-09-01 — No more underwear, and the hips stop tearing the tattoo
+
+**Shipped:** The figure is nude line art at the hips like everywhere else. The pelvis
+was a separate "shorts" shape — waistband, side seam, hem across the thighs, fold
+lines — and it is gone. The torso outline now runs down to the crotch and the legs are
+drawn *over* it, so what shows at the hips is the thigh's own sloped top edge: the
+inguinal crease, one line instead of six.
+
+A tattoo dropped on the hips also renders whole. Two separate causes:
+
+1. The hips silhouette was sampled from the shorts outline, and that outline doubles
+   back on itself at the crotch. `interp()` walks points as if they only ever descend,
+   so the sampled radius collapsed from 176 px to 6 px and back over three rows — the
+   contour warp then drew the artwork as horizontal shards. Fixed twice over: the hips
+   now have their own monotone `HIP_SURF` profile, and `outline_half()` takes the
+   outermost crossing so no outline can collapse that way again.
+2. Rows past the top or bottom of a part were skipped outright, and the placement was
+   clamped by its CENTRE, so half a tattoo could hang off the drawing and be cut by the
+   canvas edge. The warp now holds the end cross-section for overhanging rows, and a
+   drag keeps the whole artwork inside the view.
+
+**Learned:** A silhouette used as a surface model has a requirement the drawing does
+not: it must be single-valued in y. Anything read off a closed outline can violate that
+silently, and the failure shows up as a rendering artifact three steps downstream.
+
+**Changed:** Nothing on the roadmap. `thigh-r`/`-l` now measure "hip crease to knee" —
+same 25 cm, honest name.
+
+**Open:** The back view still has no pelvis art (the `back` part file overwrites the
+assembled back figure — pre-existing, unrelated).
+
+---
+
+## 2026-09-01 — Male or female body
+
+**Shipped:** A body selector at the top of the Edit sheet. The customer picks male or
+female; the illustration, the silhouette the tattoo is warped against, and the
+centimetre readout all switch with it. Region selection survives the switch because
+both figures use the same part ids.
+
+The female figure is *derived* from the male anatomy tables rather than drawn again:
+one height factor, per-limb centre/width factors, and a per-height width factor on the
+torso (waist 0.83, hips 1.14). Only the chest linework is authored fresh. That keeps
+the two bodies structurally identical where it matters — the silhouette is still the
+surface model, so the contour warp and the exact-by-construction sizing come along for
+free. A female forearm reports 23.8 cm, and the build still asserts every region span.
+
+**Learned:** Remounting the canvas on the body the customer *asked for* is a bug, not a
+fix. `body` flips one render before its geometry file has loaded, so the canvas
+remounted against the OLD figure's coordinate space and then never re-seeded — the
+tattoo ended up parked outside the drawing. Keying on the figure that actually loaded
+(`data.figure.body`) is the correct signal. Caught by driving the real app, not by
+reading the diff.
+
+Also: `aria-label="Neck & torso"` had shipped unescaped since the first build. The app
+never noticed because it inlines the markup as HTML, but no SVG viewer will open the
+file — which is exactly how it surfaced, while checking the new drawings.
+
+**Changed:** The generator is now variant-shaped, so a third body is a table, not a
+rewrite. Nothing else on the roadmap moved.
+
+**Open:** Should both figures be the same height so sizes compare directly between
+them? 165 vs 180 cm is a guess until an artist says otherwise. And the body choice is
+not in the share payload yet — it goes in with `specs/006`.
+
+---
+
 ## 2026-09-01 — The in-app-browser dead band, properly this time
 
 **Shipped:** A second pass on the landing screen after it came back from WhatsApp's
