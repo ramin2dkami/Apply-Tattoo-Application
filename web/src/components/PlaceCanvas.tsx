@@ -71,6 +71,19 @@ export function PlaceCanvas({
   // explicit override once the user unlocks it and drags a corner non-uniformly.
   const hCm = heightCm ?? place.widthCm * (src.height / src.width);
 
+  /* Keep the whole tattoo inside the part's view. Clamping only the CENTRE lets half
+   * the artwork hang off the drawing, where the canvas simply ends — which reads as
+   * the image being cut in half rather than as a placement that ran out of body. */
+  function clampCentre(cx: number, cy: number, wCm: number, hCmv: number) {
+    const halfW = (wCm * pxPerCm) / 2;
+    const halfH = (hCmv * pxPerCm) / 2;
+    const mid = (lo: number, hi: number, v: number) => (lo > hi ? (lo + hi) / 2 : clamp(v, lo, hi));
+    return {
+      cx: mid(vb[0] + halfW, vb[0] + vb[2] - halfW, cx),
+      cy: mid(vb[1] + halfH, vb[1] + vb[3] - halfH, cy),
+    };
+  }
+
   // ---- view zoom/pan, independent of the tattoo's own placement ----
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -235,8 +248,7 @@ export function PlaceCanvas({
       dragStart.current = { x: e.clientX, y: e.clientY };
       setPlace((p) => ({
         ...p,
-        cx: clamp(p.cx + dx, vb[0], vb[0] + vb[2]),
-        cy: clamp(p.cy + dy, vb[1], vb[1] + vb[3]),
+        ...clampCentre(p.cx + dx, p.cy + dy, p.widthCm, heightCm ?? p.widthCm * (src.height / src.width)),
       }));
     }
   }

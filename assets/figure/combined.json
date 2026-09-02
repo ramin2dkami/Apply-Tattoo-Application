@@ -1,5 +1,6 @@
 {
   "figure": {
+    "body": "male",
     "art": "front.svg",
     "artBack": "back.svg",
     "heightCm": 180,
@@ -110,12 +111,12 @@
       "label": "Neck & torso",
       "art": "torso.svg",
       "view": "front",
-      "lengthCm": 80,
+      "lengthCm": 80.0,
       "viewBox": [
         206.0,
-        190,
+        190.0,
         488.0,
-        800
+        800.0
       ],
       "rotation": {
         "model": "views",
@@ -618,12 +619,12 @@
       "label": "Hips",
       "art": "hips.svg",
       "view": "front",
-      "lengthCm": 32,
+      "lengthCm": 32.0,
       "viewBox": [
-        234.0,
-        800,
-        432.0,
-        320
+        238.0,
+        800.0,
+        424.0,
+        320.0
       ],
       "rotation": {
         "model": "views",
@@ -637,73 +638,73 @@
         "silhouette": [
           {
             "y": 840.0,
-            "left": 274.2,
-            "right": 625.8
+            "left": 280.0,
+            "right": 620.0
           },
           {
-            "y": 856.9,
-            "left": 259.3,
-            "right": 640.7
+            "y": 855.4,
+            "left": 273.8,
+            "right": 626.2
           },
           {
-            "y": 873.8,
-            "left": 257.0,
-            "right": 643.0
+            "y": 870.8,
+            "left": 267.7,
+            "right": 632.3
           },
           {
-            "y": 890.8,
-            "left": 254.7,
-            "right": 645.3
+            "y": 886.2,
+            "left": 261.5,
+            "right": 638.5
           },
           {
-            "y": 907.7,
-            "left": 252.3,
-            "right": 647.7
+            "y": 901.5,
+            "left": 258.8,
+            "right": 641.2
           },
           {
-            "y": 924.6,
-            "left": 348.5,
-            "right": 551.5
+            "y": 916.9,
+            "left": 257.3,
+            "right": 642.7
           },
           {
-            "y": 941.5,
-            "left": 444.0,
-            "right": 456.0
+            "y": 932.3,
+            "left": 256.5,
+            "right": 643.5
           },
           {
-            "y": 958.5,
-            "left": 377.6,
-            "right": 522.4
+            "y": 947.7,
+            "left": 259.5,
+            "right": 640.5
           },
           {
-            "y": 975.4,
-            "left": 311.3,
-            "right": 588.7
+            "y": 963.1,
+            "left": 262.6,
+            "right": 637.4
           },
           {
-            "y": 992.3,
-            "left": 291.4,
-            "right": 608.6
+            "y": 978.5,
+            "left": 265.7,
+            "right": 634.3
+          },
+          {
+            "y": 993.8,
+            "left": 268.8,
+            "right": 631.2
           },
           {
             "y": 1009.2,
-            "left": 398.0,
-            "right": 502.0
+            "left": 271.2,
+            "right": 628.8
           },
           {
-            "y": 1026.2,
-            "left": 365.0,
-            "right": 535.0
+            "y": 1024.6,
+            "left": 273.1,
+            "right": 626.9
           },
           {
-            "y": 1043.1,
-            "left": 332.0,
-            "right": 568.0
-          },
-          {
-            "y": 1060.0,
-            "left": 299.0,
-            "right": 601.0
+            "y": 1040.0,
+            "left": 275.0,
+            "right": 625.0
           }
         ]
       }
@@ -713,12 +714,12 @@
       "label": "Right arm",
       "art": "arm-r.svg",
       "view": "front",
-      "lengthCm": 86,
+      "lengthCm": 86.0,
       "viewBox": [
         173.0,
-        330,
+        330.0,
         155.0,
-        860
+        860.0
       ],
       "rotation": {
         "model": "cylinder",
@@ -964,12 +965,12 @@
       "label": "Left arm",
       "art": "arm-l.svg",
       "view": "front",
-      "lengthCm": 86,
+      "lengthCm": 86.0,
       "viewBox": [
         572.0,
-        330,
+        330.0,
         155.0,
-        860
+        860.0
       ],
       "rotation": {
         "model": "cylinder",
@@ -1215,12 +1216,12 @@
       "label": "Right leg",
       "art": "leg-r.svg",
       "view": "front",
-      "lengthCm": 106,
+      "lengthCm": 106.0,
       "viewBox": [
         245.0,
-        860,
-        210.0,
-        1060
+        860.0,
+        206.3,
+        1060.0
       ],
       "rotation": {
         "model": "cylinder",
@@ -1461,12 +1462,12 @@
       "label": "Left leg",
       "art": "leg-l.svg",
       "view": "front",
-      "lengthCm": 106,
+      "lengthCm": 106.0,
       "viewBox": [
-        445.0,
-        860,
-        210.0,
-        1060
+        448.7,
+        860.0,
+        206.3,
+        1060.0
       ],
       "rotation": {
         "model": "cylinder",
@@ -2303,8 +2304,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "shoulder to elbow",
-        "cm": 32,
-        "px": 320
+        "cm": 32.0,
+        "px": 320.0
       },
       "surface": {
         "model": "cylinder",
@@ -2375,8 +2376,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "shoulder to elbow",
-        "cm": 32,
-        "px": 320
+        "cm": 32.0,
+        "px": 320.0
       },
       "surface": {
         "model": "cylinder",
@@ -2447,8 +2448,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "elbow to wrist",
-        "cm": 26,
-        "px": 260
+        "cm": 26.0,
+        "px": 260.0
       },
       "surface": {
         "model": "cylinder",
@@ -2519,8 +2520,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "elbow to wrist",
-        "cm": 26,
-        "px": 260
+        "cm": 26.0,
+        "px": 260.0
       },
       "surface": {
         "model": "cylinder",
@@ -2590,9 +2591,9 @@
       "chain": "leg-r",
       "pxPerCm": 10,
       "referenceDimension": {
-        "label": "shorts hem to knee",
-        "cm": 25,
-        "px": 250
+        "label": "hip crease to knee",
+        "cm": 25.0,
+        "px": 250.0
       },
       "surface": {
         "model": "cylinder",
@@ -2662,9 +2663,9 @@
       "chain": "leg-l",
       "pxPerCm": 10,
       "referenceDimension": {
-        "label": "shorts hem to knee",
-        "cm": 25,
-        "px": 250
+        "label": "hip crease to knee",
+        "cm": 25.0,
+        "px": 250.0
       },
       "surface": {
         "model": "cylinder",
@@ -2735,8 +2736,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "knee to ankle",
-        "cm": 42,
-        "px": 420
+        "cm": 42.0,
+        "px": 420.0
       },
       "surface": {
         "model": "cylinder",
@@ -2807,8 +2808,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "knee to ankle",
-        "cm": 42,
-        "px": 420
+        "cm": 42.0,
+        "px": 420.0
       },
       "surface": {
         "model": "cylinder",
@@ -2879,8 +2880,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "collarbone to sternum",
-        "cm": 17,
-        "px": 170
+        "cm": 17.0,
+        "px": 170.0
       },
       "surface": {
         "model": "cylinder",
@@ -2951,8 +2952,8 @@
       "pxPerCm": 10,
       "referenceDimension": {
         "label": "sternum to waist",
-        "cm": 27,
-        "px": 270
+        "cm": 27.0,
+        "px": 270.0
       },
       "surface": {
         "model": "cylinder",

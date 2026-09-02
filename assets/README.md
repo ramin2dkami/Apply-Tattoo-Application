@@ -38,7 +38,7 @@ Ten regions. Left/right variants are mirrored automatically from one definition.
 |---|---|
 | `upper-arm-r` / `-l` | shoulder to elbow, 32 cm |
 | `forearm-r` / `-l` | elbow to wrist, 26 cm |
-| `thigh-r` / `-l` | shorts hem to knee, 25 cm |
+| `thigh-r` / `-l` | hip crease to knee, 25 cm |
 | `calf-r` / `-l` | knee to ankle, 42 cm |
 | `chest` | collarbone to sternum, 17 cm |
 | `abdomen` | sternum to waist, 27 cm |
@@ -100,10 +100,18 @@ Two things follow from authoring the geometry, and both were meant to be expensi
 
 ## Shape ordering
 
-Shapes are drawn back-to-front: legs, torso, shorts, arms, head, ears. Two details are
-load-bearing — the shorts hide the torso/leg junction, and the arms are drawn *in front*
-of the torso so their inner edge reads as the deltoid and armpit line rather than the
-arm floating beside the body.
+Shapes are drawn back-to-front: arms, torso, legs, neck, head, ears. Two details are
+load-bearing — the **legs are drawn in front of the torso**, whose outline runs all the
+way down to the crotch, so the thigh's own sloped top edge becomes the inguinal crease
+instead of a line across the thighs (that line, plus a waistband, is what used to read
+as underwear); and the arms are drawn *in front* of the torso so their inner edge reads
+as the deltoid and armpit line rather than the arm floating beside the body.
+
+The hips have no drawn detail lines at all, and no outline of their own that the warp
+can read: `HIP_SURF` is a separate monotone half-width profile for that span. A closed
+outline that doubles back — as any pelvis does at the crotch — cannot be sampled as
+"left and right edge at height y"; doing so collapsed the radius to nothing on the rows
+where it reversed, and the contour warp drew a tattoo placed there as torn bands.
 
 ## Known weakness
 
@@ -143,8 +151,27 @@ the app's end.
 Rebuild after any change to the source SVGs or the profile:
 
 ```
+python3 assets/tools/build_figure.py
 python3 assets/tools/trace_geometry.py
 python3 assets/tools/merge_manifest.py
+cp assets/figure/*.svg web/public/figure/
 cp assets/figure/real/*.svg web/public/figure/real/
 cp assets/figure/combined.json web/public/figure/parts.json
+cp assets/figure/female/*.svg web/public/figure/female/
+cp assets/figure/female/regions.json web/public/figure/female/parts.json
 ```
+
+## Two figures (2026-09-01)
+
+`build_figure.py` builds a **variant** per body (`specs/009`): male at 180 cm into
+`assets/figure/`, female at 165 cm into `assets/figure/female/`. The female anatomy is
+derived from the male tables, not authored separately — heights by one factor, limbs by
+their own centre/width factors, the torso by a per-height width factor (waist 0.83,
+hips 1.14) — so the two figures cannot drift structurally, and the female *silhouette*,
+which is what the contour warp reads, is genuinely female rather than a scaled-down
+male one. Only the chest linework is replaced outright; pecs are not breasts.
+
+Female part files carry a `female/` prefix in their `art` field so the app's fetch path
+needs no special case. Ids match the male set, so a region selection survives the
+switch. There is no real traced artwork for the female figure — every part is
+procedural, which the canvas has always supported.

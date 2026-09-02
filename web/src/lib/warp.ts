@@ -60,7 +60,9 @@ export function render({
 
   for (let y = y0; y < y1; y++) {
     const figY = y / scale + vb[1];
-    const surf = surfaceAt(parts, placement.cx, figY);
+    // clamped: rows past the top or bottom of the part keep the end cross-section,
+    // so artwork that overhangs is drawn whole instead of being cut off mid-image.
+    const surf = surfaceAt(parts, placement.cx, figY, true);
     if (!surf) continue;
 
     const cx = (surf.cx - vb[0]) * scale;
